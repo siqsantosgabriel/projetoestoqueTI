@@ -28,20 +28,20 @@
         .card-header-custom { background-color: var(--header-bg) !important; color: var(--text-main); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; }
         .row-baixo { border-left: 5px solid #ffc107 !important; }
         .row-zero { border-left: 5px solid #dc3545 !important; background-color: rgba(220, 53, 69, 0.05); }
+        .btn-link { color: var(--text-main); text-decoration: none; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 380px; padding: 40px; border-radius: 20px; background: #fff; }
         .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; font-size: 24px; color: var(--primary-color); }
         .admin-only { display: none !important; }
         .log-entrada { color: #198754; font-weight: bold; }
         .log-saida { color: #dc3545; font-weight: bold; }
-        .btn-link { color: var(--text-main); text-decoration: none; }
     </style>
 </head>
 <body data-bs-theme="light">
 
 <div id="loginOverlay">
     <div class="login-card text-center">
-        <h2 class="fw-bold mb-4" style="color: #333;">ESTOQUE TI</h2>
+        <h2 class="fw-bold mb-4" style="color: #333">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary w-100 shadow">ENTRAR</button>
@@ -70,9 +70,9 @@
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3"><div class="card p-3"><h6>Total Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 text-danger"><h6>Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
-            <div class="col-md-6"><div class="card p-3"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
+            <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Total Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
+            <div class="col-md-3"><div class="card p-3 shadow-sm text-danger"><h6>Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
+            <div class="col-md-6"><div class="card p-3 shadow-sm"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
         </div>
 
         <div class="card shadow-sm border-0">
@@ -92,7 +92,7 @@
         </div>
 
         <div id="secaoLogs" style="display:none;" class="mt-4">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">HISTÓRICO</h6>
                     <div class="d-flex gap-2 align-items-center">
@@ -110,7 +110,34 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalGestaoUsuarios" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5>Gerenciar Equipe</h5></div><div class="modal-body"><div class="row g-2 mb-3 bg-light p-3 rounded text-dark"><input type="hidden" id="editUserOldName"><div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div><div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div><div class="col-md-4"><button onclick="cadastrarUsuario()" class="btn btn-primary w-100">Salvar Alteração</button></div></div><table class="table table-sm"><thead><tr><th>Usuário</th><th>Senha</th><th class="text-end">Ações</th></tr></thead><tbody id="tabelaUsuariosAdmin"></tbody></table></div></div></div></div>
+<div class="modal fade" id="modalGestaoUsuarios" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header bg-dark text-white d-flex justify-content-between align-items-center w-100">
+            <h5 class="mb-0">Gerenciar Equipe</h5>
+            <button onclick="mostrarFormUsuario()" class="btn btn-warning btn-sm fw-bold">+ NOVO USUÁRIO</button>
+        </div>
+        <div class="modal-body">
+            <div id="formUsuarioAdmin" class="mb-4 bg-light p-3 rounded text-dark shadow-sm" style="display:none;">
+                <h6 id="tituloFormUser" class="fw-bold mb-3 text-primary">Novo Usuário</h6>
+                <div class="row g-2">
+                    <input type="hidden" id="editUserOldName">
+                    <div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
+                    <div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <button onclick="cadastrarUsuario()" class="btn btn-primary flex-grow-1">Salvar</button>
+                        <button onclick="esconderFormUsuario()" class="btn btn-outline-secondary">X</button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Usuário</th><th>Senha</th><th class="text-end pe-3">Ações</th></tr></thead>
+                <tbody id="tabelaUsuariosAdmin"></tbody>
+            </table>
+        </div>
+    </div></div>
+</div>
+
 <div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
 <div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
 <div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
@@ -139,19 +166,19 @@
     let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", chartInstance = null, filtroAtual = 'TUDO';
 
     function limparForms() {
-        ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal'].forEach(id => {
+        ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal', 'novoUserLogin', 'novoUserSenha', 'editUserOldName'].forEach(id => {
             const el = document.getElementById(id); if(el) el.value = '';
         });
     }
 
-    document.querySelectorAll('.modal').forEach(m => m.addEventListener('hidden.bs.modal', limparForms));
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('hidden.bs.modal', () => { limparForms(); esconderFormUsuario(); }));
 
     onValue(usersRef, s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
         corpoAdmin.innerHTML = '';
         Object.keys(usuariosAtuais).forEach(u => {
-            corpoAdmin.innerHTML += `<tr><td>${u}</td><td><code>***</code></td><td class="text-end">
+            corpoAdmin.innerHTML += `<tr><td class="ps-2 fw-semibold">${u}</td><td><code>***</code></td><td class="text-end">
                 <button onclick="prepararEdicao('${u}', '${usuariosAtuais[u]}')" class="btn btn-sm btn-link me-1">Editar</button>
                 <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-outline-danger ${u==='brunosantos'?'disabled':''}">X</button>
             </td></tr>`;
@@ -176,19 +203,44 @@
         } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
-    window.filtrarLog = (tipo) => {
-        filtroAtual = tipo;
-        document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
-        if(event) event.target.classList.add('active');
-        render();
+    // --- LÓGICA DE USUÁRIOS ---
+    window.mostrarFormUsuario = () => {
+        limparForms();
+        document.getElementById('tituloFormUser').innerText = "Novo Usuário";
+        document.getElementById('formUsuarioAdmin').style.display = 'block';
     };
 
+    window.esconderFormUsuario = () => {
+        document.getElementById('formUsuarioAdmin').style.display = 'none';
+        limparForms();
+    };
+
+    window.prepararEdicao = (u, p) => {
+        document.getElementById('editUserOldName').value = u;
+        document.getElementById('novoUserLogin').value = u;
+        document.getElementById('novoUserSenha').value = p;
+        document.getElementById('tituloFormUser').innerText = "Editar Usuário: " + u;
+        document.getElementById('formUsuarioAdmin').style.display = 'block';
+    };
+
+    window.cadastrarUsuario = () => {
+        const oldU = document.getElementById('editUserOldName').value;
+        const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim();
+        const newP = document.getElementById('novoUserSenha').value.trim();
+        if(newU && newP) {
+            if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`));
+            set(ref(db, `usuarios/${newU}`), newP);
+            esconderFormUsuario();
+            alert("Usuário salvo com sucesso!");
+        } else { alert("Preencha todos os campos!"); }
+    };
+
+    // --- RENDERS ---
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
         const buscaProd = document.getElementById('inputBusca').value.toLowerCase();
         const buscaLog = document.getElementById('inputBuscaLog').value.toLowerCase();
-        
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, alertCount = 0;
 
@@ -270,8 +322,7 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     };
-    window.prepararEdicao = (u, p) => { document.getElementById('editUserOldName').value = u; document.getElementById('novoUserLogin').value = u; document.getElementById('novoUserSenha').value = p; };
-    window.cadastrarUsuario = () => { const oldU = document.getElementById('editUserOldName').value; const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim(); const newP = document.getElementById('novoUserSenha').value.trim(); if(newU && newP) { if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`)); set(ref(db, `usuarios/${newU}`), newP); alert("Usuário salvo!"); } };
+    window.filtrarLog = (tipo) => { filtroAtual = tipo; document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active')); if(event) event.target.classList.add('active'); render(); };
     window.removerUsuario = u => { if(confirm("Remover usuário?")) remove(ref(db, `usuarios/${u}`)); };
     window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); };
     window.exportarCSV = () => {
