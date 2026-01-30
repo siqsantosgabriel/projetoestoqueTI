@@ -16,112 +16,101 @@
         .card-header { background: #212529; color: gold; font-weight: bold; }
         .baixo-estoque { background-color: #ffe8e8 !important; border-left: 5px solid #dc3545; }
         .stat-card { border-radius: 10px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        #secaoLogs { transition: all 0.3s ease; }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-    <div class="card p-4 shadow-lg text-center" style="width: 320px;">
-        <h3 class="mb-3">💻 TI - SD</h3>
-        <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha de Acesso">
-        <button onclick="verificarSenha()" class="btn btn-dark w-100">Entrar</button>
-        <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Acesso negado!</p>
+    <div class="card p-4 shadow-lg text-center" style="width: 350px;">
+        <h3 class="mb-3">💻 ACESSO TI - SD</h3>
+        <input type="text" id="userInput" class="form-control mb-2" placeholder="Usuário">
+        <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha">
+        <button onclick="verificarLogin()" class="btn btn-dark w-100">Entrar</button>
+        <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Usuário ou senha inválidos!</p>
     </div>
 </div>
 
 <div id="conteudoSistema" style="display:none;" class="container py-4">
     
     <div class="row mb-4 align-items-center">
-        <div class="col-md-7">
+        <div class="col-md-6">
             <h2 class="fw-bold text-dark">ESTOQUE TI - SD</h2>
-            <p class="text-muted">Gestão de Ativos e Insumos</p>
+            <p class="text-muted">Usuário logado: <span id="userLogado" class="fw-bold text-primary"></span></p>
         </div>
-        <div class="col-md-5 text-end">
-            <button onclick="exportarCSV()" class="btn btn-outline-success"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
+        <div class="col-md-6 text-end">
+            <button onclick="toggleLogs()" class="btn btn-outline-dark"><i class="bi bi-clock-history"></i> Histórico</button>
+            <button onclick="exportarCSV()" class="btn btn-outline-success ms-2"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar</button>
             <button class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Novo Item</button>
         </div>
     </div>
 
     <div class="row mb-4 text-center">
-        <div class="col-md-6">
-            <div class="card stat-card bg-white p-3">
-                <h6 class="text-muted">Total de Itens</h6>
-                <h2 id="dashTotal">0</h2>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card stat-card bg-danger text-white p-3">
-                <h6>Itens em Alerta (Crítico)</h6>
-                <h2 id="dashAlerta">0</h2>
-            </div>
-        </div>
+        <div class="col-md-6"><div class="card stat-card bg-white p-3"><h6>Total de Itens</h6><h2 id="dashTotal">0</h2></div></div>
+        <div class="col-md-6"><div class="card stat-card bg-danger text-white p-3"><h6>Alertas Críticos</h6><h2 id="dashAlerta">0</h2></div></div>
     </div>
 
-    <div class="card shadow border-0">
+    <div class="card shadow border-0 mb-5">
         <div class="card-body">
-            <input type="text" id="inputBusca" class="form-control mb-3 py-2" placeholder="🔍 Buscar produto por nome...">
+            <input type="text" id="inputBusca" class="form-control mb-3" placeholder="🔍 Buscar produto no estoque...">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-dark">
-                        <tr>
-                            <th>Produto</th>
-                            <th>Saldo Atual</th>
-                            <th>Mínimo</th>
-                            <th class="text-center">Movimentação</th>
-                            <th class="text-end">Ações</th>
-                        </tr>
+                        <tr><th>Produto</th><th>Saldo</th><th>Mínimo</th><th class="text-center">Ação</th><th class="text-end">Excluir</th></tr>
                     </thead>
                     <tbody id="tabelaCorpo"></tbody>
                 </table>
             </div>
         </div>
     </div>
+
+    <div id="secaoLogs" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0">📜 Histórico de Movimentações</h5>
+            <input type="text" id="buscaLog" class="form-control w-50" placeholder="🔍 Filtrar histórico...">
+        </div>
+        <div class="card shadow-sm mb-5">
+            <div class="list-group list-group-flush" id="listaLogs" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="modalEntrada" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white"><h5>📥 Registrar Entrada</h5></div>
-            <div class="modal-body">
-                <input type="hidden" id="idEntrada">
-                <div class="mb-3"><label>Data:</label><input type="date" id="dataEntrada" class="form-control"></div>
-                <div class="mb-3"><label>Quantidade:</label><input type="number" id="qtdEntrada" class="form-control"></div>
-                <div class="mb-3"><label>Responsável TI:</label><input type="text" id="respEntrada" class="form-control"></div>
-            </div>
-            <div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Atualizar Estoque</button></div>
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-success text-white"><h5>📥 Entrada</h5></div>
+        <div class="modal-body">
+            <input type="hidden" id="idEntrada">
+            <label class="small fw-bold">Quantidade:</label><input type="number" id="qtdEntrada" class="form-control mb-2">
+            <label class="small fw-bold">Data:</label><input type="date" id="dataEntrada" class="form-control">
         </div>
-    </div>
+        <div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div>
+    </div></div>
 </div>
 
 <div class="modal fade" id="modalSaida" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white"><h5>📤 Registrar Saída</h5></div>
-            <div class="modal-body">
-                <input type="hidden" id="idSaida">
-                <div class="mb-2"><label>Data:</label><input type="date" id="dataSaida" class="form-control"></div>
-                <div class="mb-2"><label>Quantidade:</label><input type="number" id="qtdSaida" class="form-control"></div>
-                <div class="mb-2"><label>Colaborador Recebedor:</label><input type="text" id="colabSaida" class="form-control"></div>
-                <div class="mb-2"><label>Solicitante:</label><input type="text" id="solicSaida" class="form-control"></div>
-                <div class="mb-2"><label>Responsável TI:</label><input type="text" id="respSaida" class="form-control"></div>
-            </div>
-            <div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Dar Baixa</button></div>
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5>📤 Saída</h5></div>
+        <div class="modal-body">
+            <input type="hidden" id="idSaida">
+            <label class="small fw-bold">Quantidade:</label><input type="number" id="qtdSaida" class="form-control mb-2">
+            <label class="small fw-bold">Colaborador Recebedor:</label><input type="text" id="colabSaida" class="form-control mb-2">
+            <label class="small fw-bold">Quem Solicitou:</label><input type="text" id="solicSaida" class="form-control mb-2">
+            <label class="small fw-bold">Data:</label><input type="date" id="dataSaida" class="form-control">
         </div>
-    </div>
+        <div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div>
+    </div></div>
 </div>
 
 <div class="modal fade" id="modalCadastro" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-dark text-white"><h5>Cadastrar Produto</h5></div>
-            <div class="modal-body">
-                <input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome do Item">
-                <input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo Inicial">
-                <input type="number" id="minNovo" class="form-control mb-2" placeholder="Estoque Mínimo">
-            </div>
-            <div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Salvar no Catálogo</button></div>
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-dark text-white"><h5>Novo Produto</h5></div>
+        <div class="modal-body">
+            <input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome">
+            <input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Qtd Inicial">
+            <input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo">
         </div>
-    </div>
+        <div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Salvar</button></div>
+    </div></div>
 </div>
 
 <script type="module">
@@ -144,64 +133,89 @@
     const logsRef = ref(db, 'logs/');
 
     let dadosAtuais = {};
+    let logsAtuais = {};
+    let usuarioAtivo = "";
 
-    // --- LOGIN ---
-    window.verificarSenha = () => {
-        if(document.getElementById('senhaInput').value === "prvl123") {
+    // --- BASE DE USUÁRIOS ---
+    const usuariosPermitidos = ["gabrielsantos", "rafaeltavares", "joycepereira", "douglassantos", "matheusribeiro", "glauberinacio", "carloshenrique", "brunosantos"];
+
+    window.verificarLogin = () => {
+        const user = document.getElementById('userInput').value.toLowerCase();
+        const senha = document.getElementById('senhaInput').value;
+        
+        if(usuariosPermitidos.includes(user) && senha === "prvl123") {
+            usuarioAtivo = user;
+            document.getElementById('userLogado').innerText = user;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'block';
-        } else { document.getElementById('erroLogin').style.display = 'block'; }
+        } else {
+            document.getElementById('erroLogin').style.display = 'block';
+        }
     };
 
-    // --- BUSCA E RENDERIZAÇÃO ---
-    function atualizarTela() {
+    // --- RENDERIZAÇÃO E FILTROS ---
+    function renderizarTabelas() {
         const corpo = document.getElementById('tabelaCorpo');
-        corpo.innerHTML = '';
+        const lista = document.getElementById('listaLogs');
         const filtro = document.getElementById('inputBusca').value.toLowerCase();
+        const filtroLog = document.getElementById('buscaLog').value.toLowerCase();
         
+        corpo.innerHTML = '';
+        lista.innerHTML = '';
         let total = 0, alertas = 0;
 
+        // Tabela Estoque
         Object.keys(dadosAtuais).forEach(id => {
             const p = dadosAtuais[id];
-            total++;
-            if (p.quantidade <= p.estoqueMinimo) alertas++;
-
+            total++; if (p.quantidade <= p.estoqueMinimo) alertas++;
             if (p.nome.toLowerCase().includes(filtro)) {
-                const classeAlerta = p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '';
-                corpo.innerHTML += `
-                    <tr class="${classeAlerta}">
-                        <td><strong>${p.nome}</strong></td>
-                        <td><span class="badge bg-dark fs-6">${p.quantidade}</span></td>
-                        <td>${p.estoqueMinimo}</td>
-                        <td class="text-center">
-                            <button onclick="abrirEntrada('${id}')" class="btn btn-success btn-sm me-1">📥 Entrada</button>
-                            <button onclick="abrirSaida('${id}')" class="btn btn-danger btn-sm">📤 Saída</button>
-                        </td>
-                        <td class="text-end"><button onclick="deletarProduto('${id}', '${p.nome}')" class="btn btn-link text-muted"><i class="bi bi-trash"></i></button></td>
-                    </tr>`;
+                corpo.innerHTML += `<tr class="${p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : ''}">
+                    <td><strong>${p.nome}</strong></td>
+                    <td><span class="badge bg-dark fs-6">${p.quantidade}</span></td>
+                    <td>${p.estoqueMinimo}</td>
+                    <td class="text-center">
+                        <button onclick="abrirEntrada('${id}')" class="btn btn-success btn-sm me-1">📥</button>
+                        <button onclick="abrirSaida('${id}')" class="btn btn-danger btn-sm">📤</button>
+                    </td>
+                    <td class="text-end"><button onclick="deletarProduto('${id}', '${p.nome}')" class="btn btn-link text-muted p-0"><i class="bi bi-trash"></i></button></td>
+                </tr>`;
             }
         });
         document.getElementById('dashTotal').innerText = total;
         document.getElementById('dashAlerta').innerText = alertas;
+
+        // Histórico de Logs
+        Object.keys(logsAtuais).reverse().forEach(id => {
+            const l = logsAtuais[id];
+            const textoBusca = (l.produto + l.tipo + l.colab + l.resp).toLowerCase();
+            if(textoBusca.includes(filtroLog)) {
+                lista.innerHTML += `<div class="list-group-item">
+                    <div class="d-flex justify-content-between"><small class="text-muted">${l.data} às ${l.hora}</small> <span class="badge ${l.tipo === 'ENTRADA' ? 'bg-success' : 'bg-danger'}">${l.tipo}</span></div>
+                    <div><strong>${l.qtd}x ${l.produto}</strong></div>
+                    <small class="text-muted">TI: ${l.resp} | Destino: ${l.colab || 'Estoque'}</small>
+                </div>`;
+            }
+        });
     }
 
-    onValue(estoqueRef, (snapshot) => {
-        dadosAtuais = snapshot.val() || {};
-        atualizarTela();
-    });
+    onValue(estoqueRef, (s) => { dadosAtuais = s.val() || {}; renderizarTabelas(); });
+    onValue(logsRef, (s) => { logsAtuais = s.val() || {}; renderizarTabelas(); });
+    document.getElementById('inputBusca').addEventListener('input', renderizarTabelas);
+    document.getElementById('buscaLog').addEventListener('input', renderizarTabelas);
 
-    document.getElementById('inputBusca').addEventListener('input', atualizarTela);
+    // --- FUNÇÕES OPERACIONAIS ---
+    window.toggleLogs = () => {
+        const div = document.getElementById('secaoLogs');
+        div.style.display = div.style.display === 'none' ? 'block' : 'none';
+    };
 
-    // --- RESET DE FORMULÁRIOS ---
-    function limparForms() {
-        const ids = ['nomeNovo', 'qtdNovo', 'minNovo', 'qtdEntrada', 'respEntrada', 'qtdSaida', 'colabSaida', 'solicSaida', 'respSaida'];
-        ids.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
+    function limpar() { 
+        const campos = ['nomeNovo', 'qtdNovo', 'minNovo', 'qtdEntrada', 'qtdSaida', 'colabSaida', 'solicSaida'];
+        campos.forEach(c => document.getElementById(c).value = '');
     }
 
-    // --- OPERAÇÕES ---
     window.abrirEntrada = (id) => { 
-        limparForms();
-        document.getElementById('idEntrada').value = id; 
+        limpar(); document.getElementById('idEntrada').value = id; 
         document.getElementById('dataEntrada').valueAsDate = new Date();
         new bootstrap.Modal('#modalEntrada').show(); 
     };
@@ -209,23 +223,14 @@
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
         const qtd = parseInt(document.getElementById('qtdEntrada').value);
-        const resp = document.getElementById('respEntrada').value;
-        const data = document.getElementById('dataEntrada').value;
-        if(!qtd || !resp) return alert("Preencha todos os campos!");
-
-        const itemRef = ref(db, `estoque/${id}`);
-        const p = dadosAtuais[id];
-        
-        update(itemRef, { quantidade: p.quantidade + qtd });
-        push(logsRef, { tipo: 'ENTRADA', produto: p.nome, qtd: qtd, resp: resp, data: data, hora: new Date().toLocaleTimeString() });
-        
+        if(!qtd) return alert("Insira a quantidade!");
+        update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade + qtd });
+        push(logsRef, { tipo: 'ENTRADA', produto: dadosAtuais[id].nome, qtd, resp: usuarioAtivo, data: document.getElementById('dataEntrada').value, hora: new Date().toLocaleTimeString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
-        limparForms();
     };
 
     window.abrirSaida = (id) => { 
-        limparForms();
-        document.getElementById('idSaida').value = id; 
+        limpar(); document.getElementById('idSaida').value = id; 
         document.getElementById('dataSaida').valueAsDate = new Date();
         new bootstrap.Modal('#modalSaida').show(); 
     };
@@ -234,43 +239,28 @@
         const id = document.getElementById('idSaida').value;
         const qtd = parseInt(document.getElementById('qtdSaida').value);
         const colab = document.getElementById('colabSaida').value;
-        const resp = document.getElementById('respSaida').value;
-        const data = document.getElementById('dataSaida').value;
-        
-        if(!qtd || !colab || !resp) return alert("Preencha os campos obrigatórios!");
-        const p = dadosAtuais[id];
-        if(p.quantidade < qtd) return alert("Estoque insuficiente!");
-
-        update(ref(db, `estoque/${id}`), { quantidade: p.quantidade - qtd });
-        push(logsRef, { tipo: 'SAÍDA', produto: p.nome, qtd: qtd, resp: resp, colab: colab, solic: document.getElementById('solicSaida').value, data: data, hora: new Date().toLocaleTimeString() });
-        
+        if(!qtd || !colab) return alert("Preencha os campos!");
+        if(dadosAtuais[id].quantidade < qtd) return alert("Saldo insuficiente!");
+        update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade - qtd });
+        push(logsRef, { tipo: 'SAÍDA', produto: dadosAtuais[id].nome, qtd, resp: usuarioAtivo, colab, data: document.getElementById('dataSaida').value, hora: new Date().toLocaleTimeString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
-        limparForms();
     };
 
     window.salvarNovoProduto = () => {
         const nome = document.getElementById('nomeNovo').value;
-        if(!nome) return alert("Nome é obrigatório!");
-        push(estoqueRef, {
-            nome: nome,
-            quantidade: parseInt(document.getElementById('qtdNovo').value) || 0,
-            estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0
-        });
-        bootstrap.Modal.getInstance('#modalCadastro').hide();
-        limparForms();
+        if(!nome) return;
+        push(estoqueRef, { nome, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
+        bootstrap.Modal.getInstance('#modalCadastro').hide(); limpar();
     };
 
-    window.deletarProduto = (id, nome) => { if(confirm(`Excluir permanentemente "${nome}"?`)) remove(ref(db, `estoque/${id}`)); };
+    window.deletarProduto = (id, nome) => { if(confirm(`Excluir "${nome}"?`)) remove(ref(db, `estoque/${id}`)); };
 
     window.exportarCSV = () => {
-        let csv = 'sep=,\nProduto,Quantidade Atual,Minimo\n';
-        Object.values(dadosAtuais).forEach(p => { csv += `"${p.nome}",${p.quantidade},${p.estoqueMinimo}\n`; });
+        let csv = 'sep=,\nProduto,Saldo,Minimo\n';
+        Object.values(dadosAtuais).forEach(p => csv += `"${p.nome}",${p.quantidade},${p.estoqueMinimo}\n`);
         const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'estoque_ti_sd.csv';
-        a.click();
+        a.href = URL.createObjectURL(blob); a.download = 'estoque_ti_sd.csv'; a.click();
     };
 </script>
 
