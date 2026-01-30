@@ -3,84 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque TI - Real Time</title>
+    <title>Estoque TI - Privado</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f4f7f6; }
-        .baixo-estoque { background-color: #ffe5e5 !important; border-left: 5px solid #d9534f; }
-        .card-header { background: #2c3e50; color: white; font-weight: bold; }
-        .btn-movimentacao { width: 100px; }
-        .badge-qtd { font-size: 1.1rem; padding: 0.5em 0.8em; }
+        body { background-color: #f8f9fa; }
+        /* Estilo da Tela de Login */
+        #loginOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #2c3e50; z-index: 9999; display: flex;
+            align-items: center; justify-content: center; color: white;
+        }
+        .card-login { width: 350px; padding: 20px; border-radius: 10px; background: white; color: #333; }
+        .baixo-estoque { background-color: #fff5f5 !important; border-left: 5px solid #dc3545; }
+        .btn-acao { width: 40px; height: 40px; border-radius: 8px; }
     </style>
 </head>
 <body>
 
-<div class="container py-5">
+<div id="loginOverlay">
+    <div class="card-login shadow-lg text-center">
+        <h4 class="mb-3">🔒 Acesso Restrito</h4>
+        <p class="text-muted small">Digite a senha da equipe de TI</p>
+        <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha">
+        <button onclick="verificarSenha()" class="btn btn-primary w-100">Entrar no Sistema</button>
+        <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Senha incorreta!</p>
+    </div>
+</div>
+
+<div id="conteudoSistema" style="display:none;" class="container py-5">
     <div class="card shadow border-0">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span>📦 CONTROLE DE ESTOQUE - EQUIPE TI PRVL</span>
-            <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Cadastrar Produto</button>
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+            <span>📦 ESTOQUE TI - REAL TIME</span>
+            <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Novo Item</button>
         </div>
         <div class="card-body">
-            <div class="row mb-3">
-                <div class="col">
-                    <input type="text" id="inputBusca" class="form-control" placeholder="🔍 Pesquisar produto por nome...">
-                </div>
-            </div>
+            <input type="text" id="inputBusca" class="form-control mb-3" placeholder="Filtrar produtos...">
             
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Produto</th>
-                            <th>Qtd. Atual</th>
-                            <th>Estoque Mín.</th>
+                            <th>Qtd</th>
+                            <th>Mín.</th>
                             <th class="text-center">Ações</th>
+                            <th class="text-end">Excluir</th>
                         </tr>
                     </thead>
-                    <tbody id="tabelaCorpo">
-                        </tbody>
+                    <tbody id="tabelaCorpo"></tbody>
                 </table>
             </div>
         </div>
     </div>
 </div>
 
-<div class="modal fade" id="modalCadastro" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalCadastro" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Novo Item no Inventário</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+            <div class="modal-header"><h5>Novo Produto</h5></div>
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label">Nome do Produto</label>
-                    <input type="text" id="nomeNovo" class="form-control" placeholder="Ex: Teclado Mecânico">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Quantidade Inicial</label>
-                    <input type="number" id="qtdNovo" class="form-control" value="0">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Alerta de Estoque Baixo (Mínimo)</label>
-                    <input type="number" id="minNovo" class="form-control" value="5">
-                </div>
+                <input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome">
+                <input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Quantidade">
+                <input type="number" id="minNovo" class="form-control mb-2" placeholder="Alerta Mínimo">
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button onclick="salvarNovoProduto()" class="btn btn-success">Confirmar Cadastro</button>
+                <button onclick="salvarNovoProduto()" class="btn btn-success w-100">Cadastrar</button>
             </div>
         </div>
     </div>
 </div>
 
 <script type="module">
-    // Importações necessárias usando a CDN do Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // Suas credenciais integradas
     const firebaseConfig = {
         apiKey: "AIzaSyA4lwZX_GwaTuMAjmfZB3N-zaF869DV6rE",
         authDomain: "projetoestoqueti.firebaseapp.com",
@@ -91,90 +88,86 @@
         appId: "1:787336391551:web:021e81574a1e0bd4dd084a"
     };
 
-    // Inicializa o Firebase
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-
-    // Referência do banco
     const estoqueRef = ref(db, 'estoque/');
 
-    // Função para renderizar a tabela
-    function renderizarTabela(dados) {
+    // LOGIN SIMPLES
+    const SENHA_CORRETA = "prvl123"; // ALTERE AQUI A SENHA DA EQUIPE
+
+    window.verificarSenha = () => {
+        const senha = document.getElementById('senhaInput').value;
+        if(senha === SENHA_CORRETA) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('conteudoSistema').style.display = 'block';
+        } else {
+            document.getElementById('erroLogin').style.display = 'block';
+        }
+    };
+
+    // RENDERIZAR
+    onValue(estoqueRef, (snapshot) => {
+        const dados = snapshot.val();
         const corpo = document.getElementById('tabelaCorpo');
         corpo.innerHTML = '';
         const filtro = document.getElementById('inputBusca').value.toLowerCase();
 
-        if (!dados) return;
-
-        Object.keys(dados).forEach(id => {
+        for (let id in dados) {
             const p = dados[id];
             if (p.nome.toLowerCase().includes(filtro)) {
-                const classeAlerta = p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '';
+                const alerta = p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '';
                 corpo.innerHTML += `
-                    <tr class="${classeAlerta}">
+                    <tr class="${alerta}">
                         <td><strong>${p.nome}</strong></td>
-                        <td><span class="badge bg-dark badge-qtd">${p.quantidade}</span></td>
-                        <td><small class="text-muted">Mín: ${p.estoqueMinimo}</small></td>
+                        <td><span class="badge bg-dark">${p.quantidade}</span></td>
+                        <td><small>${p.estoqueMinimo}</small></td>
                         <td class="text-center">
-                            <button onclick="movimentar('${id}', 1)" class="btn btn-success btn-sm btn-movimentacao">+ Entrada</button>
-                            <button onclick="movimentar('${id}', -1)" class="btn btn-danger btn-sm btn-movimentacao">- Saída</button>
+                            <button onclick="movimentar('${id}', 1)" class="btn btn-outline-success btn-sm btn-acao">+</button>
+                            <button onclick="movimentar('${id}', -1)" class="btn btn-outline-danger btn-sm btn-acao">-</button>
+                        </td>
+                        <td class="text-end">
+                            <button onclick="deletarProduto('${id}', '${p.nome}')" class="btn btn-link text-danger p-0">
+                                <i class="bi bi-trash3-fill"></i>
+                            </button>
                         </td>
                     </tr>
                 `;
             }
-        });
-    }
-
-    // Escuta mudanças no Firebase e atualiza em tempo real
-    onValue(estoqueRef, (snapshot) => {
-        renderizarTabela(snapshot.val());
+        }
     });
 
-    // Função para salvar novo produto
+    // FUNÇÕES GLOBAIS
     window.salvarNovoProduto = () => {
         const nome = document.getElementById('nomeNovo').value;
-        const qtd = parseInt(document.getElementById('qtdNovo').value);
-        const min = parseInt(document.getElementById('minNovo').value);
+        if(!nome) return alert("Nome obrigatório!");
+        push(estoqueRef, {
+            nome: nome,
+            quantidade: parseInt(document.getElementById('qtdNovo').value) || 0,
+            estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0
+        });
+        bootstrap.Modal.getInstance(document.getElementById('modalCadastro')).hide();
+        document.getElementById('nomeNovo').value = '';
+    };
 
-        if (nome) {
-            const novoRef = push(estoqueRef);
-            set(novoRef, {
-                nome: nome,
-                quantidade: qtd,
-                estoqueMinimo: min
-            });
-            bootstrap.Modal.getInstance(document.getElementById('modalCadastro')).hide();
-            document.getElementById('nomeNovo').value = '';
-        } else {
-            alert("Por favor, preencha o nome do produto.");
+    window.movimentar = (id, valor) => {
+        const itemRef = ref(db, `estoque/${id}`);
+        onValue(itemRef, (s) => {
+            const novaQtd = (s.val().quantidade || 0) + valor;
+            update(itemRef, { quantidade: Math.max(0, novaQtd) });
+        }, { onlyOnce: true });
+    };
+
+    window.deletarProduto = (id, nome) => {
+        if(confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)) {
+            remove(ref(db, `estoque/${id}`));
         }
     };
 
-    // Função para alterar quantidade (Entrada/Saída)
-    window.movimentar = (id, valor) => {
-        const itemRef = ref(db, `estoque/${id}`);
-        // Busca o valor atual uma única vez para somar/subtrair
-        onValue(itemRef, (snapshot) => {
-            const atual = snapshot.val().quantidade;
-            const novaQtd = atual + valor;
-            if (novaQtd < 0) {
-                alert("Estoque não pode ser negativo!");
-                return;
-            }
-            update(itemRef, { quantidade: novaQtd });
-        }, { onlyOnce: true });
-    };
-
-    // Listener para o campo de busca
     document.getElementById('inputBusca').addEventListener('input', () => {
-        onValue(estoqueRef, (snapshot) => {
-            renderizarTabela(snapshot.val());
-        }, { onlyOnce: true });
+        onValue(estoqueRef, (s) => {}, {onlyOnce: true}); // Força refresh visual
     });
-
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
