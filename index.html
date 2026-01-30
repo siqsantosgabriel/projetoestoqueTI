@@ -40,7 +40,7 @@
 
 <div id="loginOverlay">
     <div class="login-card text-center">
-        <h2 class="fw-bold mb-4">ESTOQUE TI</h2>
+        <h2 class="fw-bold mb-4" style="color:#333">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary w-100 shadow">ENTRAR</button>
@@ -78,7 +78,7 @@
             <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">ESTOQUE ATUAL</h6>
                 <div class="d-flex gap-2">
-                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="Buscar...">
+                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="Buscar no estoque...">
                     <button class="btn btn-warning btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Item</button>
                 </div>
             </div>
@@ -94,13 +94,16 @@
             <div class="card">
                 <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">HISTÓRICO</h6>
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-secondary active" onclick="filtrarLog('TUDO')">Tudo</button>
-                        <button class="btn btn-outline-success" onclick="filtrarLog('ENTRADA')">Entradas</button>
-                        <button class="btn btn-outline-danger" onclick="filtrarLog('SAÍDA')">Saídas</button>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="text" id="inputBuscaLog" class="form-control form-control-sm" placeholder="Pesquisar no histórico...">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active" onclick="filtrarLog('TUDO')">Tudo</button>
+                            <button class="btn btn-outline-success" onclick="filtrarLog('ENTRADA')">Entradas</button>
+                            <button class="btn btn-outline-danger" onclick="filtrarLog('SAÍDA')">Saídas</button>
+                        </div>
                     </div>
                 </div>
-                <div class="list-group list-group-flush" id="listaLogs" style="max-height: 250px; overflow-y: auto;"></div>
+                <div class="list-group list-group-flush" id="listaLogs" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -151,16 +154,14 @@
 
     let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", chartInstance = null, filtroAtual = 'TUDO';
 
-    // --- LIMPEZA DE FORMULÁRIOS ---
     function limparForms() {
-        const inputs = ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal'];
-        inputs.forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+        ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.value = '';
+        });
     }
 
-    // Ouvinte para limpar quando qualquer modal fechar
     document.querySelectorAll('.modal').forEach(m => m.addEventListener('hidden.bs.modal', limparForms));
 
-    // --- LOGIN ---
     onValue(usersRef, s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
@@ -187,30 +188,33 @@
                     if(el.tagName === 'TH' || el.tagName === 'TD') el.style.setProperty('display', 'table-cell', 'important');
                 });
             }
+            render();
         } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
-    // --- FILTROS DE LOG ---
     window.filtrarLog = (tipo) => {
         filtroAtual = tipo;
         document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
-        event.target.classList.add('active');
+        if(event) event.target.classList.add('active');
         render();
     };
 
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
-        const f = document.getElementById('inputBusca').value.toLowerCase();
+        const buscaProd = document.getElementById('inputBusca').value.toLowerCase();
+        const buscaLog = document.getElementById('inputBuscaLog').value.toLowerCase();
+        
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, alertCount = 0;
 
+        // Render Estoque
         Object.keys(dadosAtuais).forEach(id => {
             const p = dadosAtuais[id]; tot++;
             const zero = p.quantidade <= 0;
             const baixo = p.quantidade <= p.estoqueMinimo;
             if(baixo) alertCount++;
-            if(p.nome.toLowerCase().includes(f)) {
+            if(p.nome.toLowerCase().includes(buscaProd)) {
                 corpo.innerHTML += `<tr class="${zero ? 'row-zero' : (baixo ? 'row-baixo' : '')}">
                     <td class="ps-4 fw-semibold">${p.nome}</td>
                     <td><span class="badge ${zero ? 'bg-danger' : (baixo ? 'bg-warning text-dark' : 'bg-success')}">${p.quantidade}</span></td>
@@ -225,52 +229,65 @@
                 </tr>`;
             }
         });
-        document.getElementById('dashTotal').innerText = tot;
-        document.getElementById('dashAlerta').innerText = alertCount;
 
+        // Render Logs
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
+            const textoBusca = `${l.prod} ${l.user} ${l.os || ''} ${l.colab || ''}`.toLowerCase();
+            
             if(filtroAtual !== 'TUDO' && l.tipo !== filtroAtual) return;
+            if(!textoBusca.includes(buscaLog)) return;
+
             const classeTipo = l.tipo === 'ENTRADA' ? 'log-entrada' : 'log-saida';
-            lista.innerHTML += `<div class="list-group-item small">
-                <span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) - Por: ${l.user} | OS: ${l.os || '-'} | ${l.data}
+            const btnDelLog = userLogado === 'brunosantos' ? `<button onclick="delLog('${id}')" class="btn btn-sm text-muted p-0 ms-2"><i class="bi bi-x-circle"></i></button>` : '';
+
+            lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center small">
+                <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) - Por: ${l.user} | OS: ${l.os || '-'} | ${l.data}</div>
+                ${btnDelLog}
             </div>`;
         });
+
+        document.getElementById('dashTotal').innerText = tot;
+        document.getElementById('dashAlerta').innerText = alertCount;
         renderizarGrafico();
     }
 
-    // --- RESTANTE DAS FUNÇÕES (MESMA LÓGICA) ---
+    // --- FIREBASE ACTIONS ---
     onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
     onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
+    
     document.getElementById('inputBusca').addEventListener('input', render);
-    window.toggleTheme = () => { document.body.setAttribute('data-bs-theme', document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light'); render(); };
-    window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
-    window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
+    document.getElementById('inputBuscaLog').addEventListener('input', render);
+
+    window.delLog = id => { if(confirm("Excluir este registro do histórico?")) remove(ref(db, `logs/${id}`)); };
+    window.del = id => { if(confirm("Deseja excluir permanentemente este item do estoque?")) remove(ref(db, `estoque/${id}`)); };
+
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
         const q = parseInt(document.getElementById('qtdEntrada').value);
+        if(!q) return;
         update(ref(db, `estoque/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
         push(logsRef, { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
-        limparForms();
     };
-    window.abrirSaida = id => { document.getElementById('idSaida').value = id; new bootstrap.Modal('#modalSaida').show(); };
+
     window.confirmarSaida = () => {
         const id = document.getElementById('idSaida').value;
         const q = parseInt(document.getElementById('qtdSaida').value);
-        if(dadosAtuais[id].quantidade < q) return alert("Saldo insuficiente");
+        if(!q || dadosAtuais[id].quantidade < q) return alert("Saldo insuficiente");
         update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade - q });
         push(logsRef, { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
-        limparForms();
-    };
-    window.salvarNovoProduto = () => {
-        push(estoqueRef, { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
-        bootstrap.Modal.getInstance('#modalCadastro').hide();
-        limparForms();
     };
 
-    function renderizarGrafico() {
+    window.salvarNovoProduto = () => {
+        const n = document.getElementById('nomeNovo').value;
+        if(!n) return;
+        push(estoqueRef, { nome: n, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
+        bootstrap.Modal.getInstance('#modalCadastro').hide();
+    };
+
+    window.renderizarGrafico = () => {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
         const counts = {};
         Object.values(logsAtuais).forEach(l => { if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd); });
@@ -281,13 +298,16 @@
             data: { labels, datasets: [{ label: 'Saídas', data: labels.map(l => counts[l]), backgroundColor: '#ffd700', borderRadius: 4 }] },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
-    }
+    };
 
+    window.toggleTheme = () => { document.body.setAttribute('data-bs-theme', document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light'); render(); };
+    window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
+    window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
+    window.abrirSaida = id => { document.getElementById('idSaida').value = id; new bootstrap.Modal('#modalSaida').show(); };
     window.prepararEdicao = (u, p) => { document.getElementById('editUserOldName').value = u; document.getElementById('novoUserLogin').value = u; document.getElementById('novoUserSenha').value = p; };
-    window.cadastrarUsuario = () => { const oldU = document.getElementById('editUserOldName').value; const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim(); const newP = document.getElementById('novoUserSenha').value.trim(); if(newU && newP) { if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`)); set(ref(db, `usuarios/${newU}`), newP); limparForms(); alert("Usuário atualizado!"); } };
-    window.removerUsuario = u => { if(confirm("Remover?")) remove(ref(db, `usuarios/${u}`)); };
-    window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); limparForms(); };
-    window.del = id => { if(confirm("Excluir?")) remove(ref(db, `estoque/${id}`)); };
+    window.cadastrarUsuario = () => { const oldU = document.getElementById('editUserOldName').value; const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim(); const newP = document.getElementById('novoUserSenha').value.trim(); if(newU && newP) { if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`)); set(ref(db, `usuarios/${newU}`), newP); alert("Usuário atualizado!"); } };
+    window.removerUsuario = u => { if(confirm("Remover usuário?")) remove(ref(db, `usuarios/${u}`)); };
+    window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); };
     window.exportarCSV = () => {
         let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Data\n';
         Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.data}\n`);
