@@ -3,51 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estoque TI - Privado</title>
+    <title>ESTOQUE TI - SD</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
-        body { background-color: #f8f9fa; }
-        /* Estilo da Tela de Login */
+        body { background-color: #f1f3f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #2c3e50; z-index: 9999; display: flex;
-            align-items: center; justify-content: center; color: white;
+            background: #1a1a1a; z-index: 9999; display: flex;
+            align-items: center; justify-content: center;
         }
-        .card-login { width: 350px; padding: 20px; border-radius: 10px; background: white; color: #333; }
-        .baixo-estoque { background-color: #fff5f5 !important; border-left: 5px solid #dc3545; }
-        .btn-acao { width: 40px; height: 40px; border-radius: 8px; }
+        .card-header { background: #212529; color: gold; font-weight: bold; border: none; }
+        .baixo-estoque { background-color: #ffe8e8 !important; }
+        .stat-card { border-radius: 10px; border: none; transition: 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
     </style>
 </head>
 <body>
 
 <div id="loginOverlay">
-    <div class="card-login shadow-lg text-center">
-        <h4 class="mb-3">🔒 Acesso Restrito</h4>
-        <p class="text-muted small">Digite a senha da equipe de TI</p>
-        <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha">
-        <button onclick="verificarSenha()" class="btn btn-primary w-100">Entrar no Sistema</button>
-        <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Senha incorreta!</p>
+    <div class="card p-4 shadow-lg text-center" style="width: 320px;">
+        <h3 class="mb-3">💻 TI - SD</h3>
+        <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha de Acesso">
+        <button onclick="verificarSenha()" class="btn btn-dark w-100">Entrar</button>
+        <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Acesso negado!</p>
     </div>
 </div>
 
-<div id="conteudoSistema" style="display:none;" class="container py-5">
-    <div class="card shadow border-0">
-        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-            <span>📦 ESTOQUE TI - REAL TIME</span>
-            <button class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Novo Item</button>
+<div id="conteudoSistema" style="display:none;" class="container py-4">
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2 class="fw-bold text-dark">ESTOQUE TI - SD</h2>
+            <p class="text-muted">Gestão Profissional de Ativos</p>
         </div>
+        <div class="col-md-4 text-end pt-3">
+            <button onclick="exportarCSV()" class="btn btn-outline-success"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar Excel</button>
+            <button class="btn btn-warning ms-2" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Novo Item</button>
+        </div>
+    </div>
+
+    <div class="row mb-4 text-center">
+        <div class="col-md-4">
+            <div class="card stat-card bg-white p-3 shadow-sm">
+                <h6 class="text-muted">Total de Itens</h6>
+                <h2 id="dashTotal">0</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card bg-danger text-white p-3 shadow-sm">
+                <h6>Abaixo do Mínimo</h6>
+                <h2 id="dashAlerta">0</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card bg-dark text-white p-3 shadow-sm">
+                <h6>Movimentações Hoje</h6>
+                <h2 id="dashLogs">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow border-0">
         <div class="card-body">
-            <input type="text" id="inputBusca" class="form-control mb-3" placeholder="Filtrar produtos...">
-            
+            <input type="text" id="inputBusca" class="form-control mb-3 py-2" placeholder="🔍 Buscar por nome do produto...">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead class="table-light">
+                    <thead class="table-dark">
                         <tr>
                             <th>Produto</th>
-                            <th>Qtd</th>
-                            <th>Mín.</th>
-                            <th class="text-center">Ações</th>
+                            <th>Saldo</th>
+                            <th>Mínimo</th>
+                            <th class="text-center">Ações de Estoque</th>
                             <th class="text-end">Excluir</th>
                         </tr>
                     </thead>
@@ -56,20 +83,58 @@
             </div>
         </div>
     </div>
+
+    <div class="mt-5">
+        <h5 class="fw-bold"><i class="bi bi-clock-history"></i> Histórico de Atividades</h5>
+        <div class="card shadow-sm mt-3">
+            <div class="list-group list-group-flush" id="listaLogs" style="max-height: 300px; overflow-y: auto;">
+                </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEntrada" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white"><h5>📥 Registrar Entrada</h5></div>
+            <div class="modal-body">
+                <input type="hidden" id="idEntrada">
+                <label>Data:</label> <input type="date" id="dataEntrada" class="form-control mb-2">
+                <label>Quantidade:</label> <input type="number" id="qtdEntrada" class="form-control mb-2">
+                <label>Responsável:</label> <input type="text" id="respEntrada" class="form-control" placeholder="Quem está dando entrada?">
+            </div>
+            <div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Atualizar Saldo</button></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalSaida" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white"><h5>📤 Registrar Saída</h5></div>
+            <div class="modal-body">
+                <input type="hidden" id="idSaida">
+                <label>Data:</label> <input type="date" id="dataSaida" class="form-control mb-2">
+                <label>Quantidade:</label> <input type="number" id="qtdSaida" class="form-control mb-2">
+                <label>Colaborador Recebedor:</label> <input type="text" id="colabSaida" class="form-control mb-2" placeholder="Quem vai receber?">
+                <label>Quem Solicitou:</label> <input type="text" id="solicSaida" class="form-control mb-2" placeholder="Quem pediu o item?">
+                <label>Responsável TI:</label> <input type="text" id="respSaida" class="form-control" placeholder="Seu nome">
+            </div>
+            <div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Registrar Saída</button></div>
+        </div>
+    </div>
 </div>
 
 <div class="modal fade" id="modalCadastro" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header"><h5>Novo Produto</h5></div>
+            <div class="modal-header bg-dark text-white"><h5>Novo Item no Catálogo</h5></div>
             <div class="modal-body">
-                <input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome">
-                <input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Quantidade">
+                <input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome do Produto">
+                <input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Quantidade Inicial">
                 <input type="number" id="minNovo" class="form-control mb-2" placeholder="Alerta Mínimo">
             </div>
-            <div class="modal-footer">
-                <button onclick="salvarNovoProduto()" class="btn btn-success w-100">Cadastrar</button>
-            </div>
+            <div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Criar Item</button></div>
         </div>
     </div>
 </div>
@@ -91,81 +156,148 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const estoqueRef = ref(db, 'estoque/');
+    const logsRef = ref(db, 'logs/');
 
-    // LOGIN SIMPLES
-    const SENHA_CORRETA = "prvl123"; // ALTERE AQUI A SENHA DA EQUIPE
-
+    // --- LOGIN ---
     window.verificarSenha = () => {
-        const senha = document.getElementById('senhaInput').value;
-        if(senha === SENHA_CORRETA) {
+        if(document.getElementById('senhaInput').value === "prvl123") {
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'block';
-        } else {
-            document.getElementById('erroLogin').style.display = 'block';
-        }
+        } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
-    // RENDERIZAR
+    // --- RENDERIZAR TABELA E DASHBOARD ---
     onValue(estoqueRef, (snapshot) => {
-        const dados = snapshot.val();
+        const dados = snapshot.val() || {};
         const corpo = document.getElementById('tabelaCorpo');
         corpo.innerHTML = '';
         const filtro = document.getElementById('inputBusca').value.toLowerCase();
+        
+        let total = 0, alertas = 0;
 
-        for (let id in dados) {
+        Object.keys(dados).forEach(id => {
             const p = dados[id];
+            total++;
+            if (p.quantidade <= p.estoqueMinimo) alertas++;
+
             if (p.nome.toLowerCase().includes(filtro)) {
-                const alerta = p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '';
+                const classeAlerta = p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '';
                 corpo.innerHTML += `
-                    <tr class="${alerta}">
+                    <tr class="${classeAlerta}">
                         <td><strong>${p.nome}</strong></td>
-                        <td><span class="badge bg-dark">${p.quantidade}</span></td>
-                        <td><small>${p.estoqueMinimo}</small></td>
+                        <td><span class="badge bg-dark fs-6">${p.quantidade}</span></td>
+                        <td>${p.estoqueMinimo}</td>
                         <td class="text-center">
-                            <button onclick="movimentar('${id}', 1)" class="btn btn-outline-success btn-sm btn-acao">+</button>
-                            <button onclick="movimentar('${id}', -1)" class="btn btn-outline-danger btn-sm btn-acao">-</button>
+                            <button onclick="abrirEntrada('${id}')" class="btn btn-success btn-sm">📥 Entrada</button>
+                            <button onclick="abrirSaida('${id}')" class="btn btn-danger btn-sm">📤 Saída</button>
                         </td>
-                        <td class="text-end">
-                            <button onclick="deletarProduto('${id}', '${p.nome}')" class="btn btn-link text-danger p-0">
-                                <i class="bi bi-trash3-fill"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
+                        <td class="text-end"><button onclick="deletarProduto('${id}', '${p.nome}')" class="btn btn-link text-muted"><i class="bi bi-trash"></i></button></td>
+                    </tr>`;
             }
-        }
+        });
+        document.getElementById('dashTotal').innerText = total;
+        document.getElementById('dashAlerta').innerText = alertas;
     });
 
-    // FUNÇÕES GLOBAIS
+    // --- HISTÓRICO DE LOGS ---
+    onValue(logsRef, (snapshot) => {
+        const logs = snapshot.val() || {};
+        const lista = document.getElementById('listaLogs');
+        lista.innerHTML = '';
+        let hojeCount = 0;
+        const hojeStr = new Date().toISOString().split('T')[0];
+
+        Object.keys(logs).reverse().forEach(id => {
+            const l = logs[id];
+            if(l.data === hojeStr) hojeCount++;
+            lista.innerHTML += `
+                <div class="list-group-item">
+                    <small class="text-muted d-block">${l.data} ${l.hora || ''}</small>
+                    <span class="fw-bold ${l.tipo === 'ENTRADA' ? 'text-success' : 'text-danger'}">${l.tipo}</span>: 
+                    ${l.qtd}x ${l.produto} <br>
+                    <small class="text-muted">Por: ${l.resp} | Para: ${l.colab || 'Estoque'}</small>
+                </div>`;
+        });
+        document.getElementById('dashLogs').innerText = hojeCount;
+    });
+
+    // --- FUNÇÕES DE MOVIMENTAÇÃO ---
+    window.abrirEntrada = (id) => { 
+        document.getElementById('idEntrada').value = id; 
+        document.getElementById('dataEntrada').valueAsDate = new Date();
+        new bootstrap.Modal('#modalEntrada').show(); 
+    };
+
+    window.confirmarEntrada = () => {
+        const id = document.getElementById('idEntrada').value;
+        const qtd = parseInt(document.getElementById('qtdEntrada').value);
+        const resp = document.getElementById('respEntrada').value;
+        if(!qtd || !resp) return alert("Preencha tudo!");
+
+        const itemRef = ref(db, `estoque/${id}`);
+        onValue(itemRef, (s) => {
+            const p = s.val();
+            update(itemRef, { quantidade: p.quantidade + qtd });
+            push(logsRef, { tipo: 'ENTRADA', produto: p.nome, qtd: qtd, resp: resp, data: document.getElementById('dataEntrada').value, hora: new Date().toLocaleTimeString() });
+            bootstrap.Modal.getInstance('#modalEntrada').hide();
+        }, { onlyOnce: true });
+    };
+
+    window.abrirSaida = (id) => { 
+        document.getElementById('idSaida').value = id; 
+        document.getElementById('dataSaida').valueAsDate = new Date();
+        new bootstrap.Modal('#modalSaida').show(); 
+    };
+
+    window.confirmarSaida = () => {
+        const id = document.getElementById('idSaida').value;
+        const qtd = parseInt(document.getElementById('qtdSaida').value);
+        const colab = document.getElementById('colabSaida').value;
+        const solic = document.getElementById('solicSaida').value;
+        const resp = document.getElementById('respSaida').value;
+        
+        if(!qtd || !colab || !resp) return alert("Preencha os campos obrigatórios!");
+
+        const itemRef = ref(db, `estoque/${id}`);
+        onValue(itemRef, (s) => {
+            const p = s.val();
+            if(p.quantidade < qtd) return alert("Saldo insuficiente!");
+            update(itemRef, { quantidade: p.quantidade - qtd });
+            push(logsRef, { tipo: 'SAÍDA', produto: p.nome, qtd: qtd, resp: resp, colab: colab, solic: solic, data: document.getElementById('dataSaida').value, hora: new Date().toLocaleTimeString() });
+            bootstrap.Modal.getInstance('#modalSaida').hide();
+        }, { onlyOnce: true });
+    };
+
     window.salvarNovoProduto = () => {
         const nome = document.getElementById('nomeNovo').value;
-        if(!nome) return alert("Nome obrigatório!");
+        if(!nome) return alert("Nome é obrigatório!");
         push(estoqueRef, {
             nome: nome,
             quantidade: parseInt(document.getElementById('qtdNovo').value) || 0,
             estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0
         });
-        bootstrap.Modal.getInstance(document.getElementById('modalCadastro')).hide();
+        bootstrap.Modal.getInstance('#modalCadastro').hide();
         document.getElementById('nomeNovo').value = '';
     };
 
-    window.movimentar = (id, valor) => {
-        const itemRef = ref(db, `estoque/${id}`);
-        onValue(itemRef, (s) => {
-            const novaQtd = (s.val().quantidade || 0) + valor;
-            update(itemRef, { quantidade: Math.max(0, novaQtd) });
+    window.deletarProduto = (id, nome) => { if(confirm(`Excluir permanentemente "${nome}"?`)) remove(ref(db, `estoque/${id}`)); };
+
+    // --- EXPORTAÇÃO CSV ---
+    window.exportarCSV = () => {
+        onValue(estoqueRef, (snapshot) => {
+            const dados = snapshot.val();
+            let csv = 'Produto,Quantidade,Minimo\n';
+            Object.values(dados).forEach(p => { csv += `${p.nome},${p.quantidade},${p.estoqueMinimo}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'estoque_ti_sd.csv');
+            a.click();
         }, { onlyOnce: true });
     };
 
-    window.deletarProduto = (id, nome) => {
-        if(confirm(`Tem certeza que deseja excluir o produto "${nome}"?`)) {
-            remove(ref(db, `estoque/${id}`));
-        }
-    };
-
-    document.getElementById('inputBusca').addEventListener('input', () => {
-        onValue(estoqueRef, (s) => {}, {onlyOnce: true}); // Força refresh visual
-    });
+    document.getElementById('inputBusca').addEventListener('input', () => onValue(estoqueRef, (s)=>{}, {onlyOnce:true}));
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
