@@ -3,30 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESTOQUE TI - SD</title>
+    <title>ESTOQUE TI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --bg-body: #f1f3f5; --text-color: #212529; --card-bg: #ffffff; }
         [data-bs-theme="dark"] { --bg-body: #121212; --text-color: #e0e0e0; --card-bg: #1e1e1e; }
-        
         body { background-color: var(--bg-body); color: var(--text-color); font-family: 'Segoe UI', sans-serif; transition: 0.3s; }
-        .card { background-color: var(--card-bg); color: var(--text-color); border: none; }
+        .card { background-color: var(--card-bg); border: none; }
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         
-        #loginOverlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center;
-        }
-        
-        /* Cores de Alerta com !important para garantir visibilidade */
+        /* Prioridade para as cores de alerta */
         .baixo-estoque { background-color: #ffdada !important; color: #a00 !important; }
         .estoque-zero { background-color: #ff4d4d !important; color: #fff !important; font-weight: bold; }
         [data-bs-theme="dark"] .baixo-estoque { background-color: #5a1a1a !important; color: #ffbaba !important; }
         
         .theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 1000; border-radius: 50px; }
         .admin-only { display: none; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
     </style>
 </head>
 <body data-bs-theme="light">
@@ -35,10 +29,10 @@
 
 <div id="loginOverlay">
     <div class="card p-4 shadow-lg text-center" style="width: 350px;">
-        <h3 class="mb-3">💻 TI - SD</h3>
+        <h2 class="mb-4 fw-bold text-dark">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-2" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-3" placeholder="Senha">
-        <button onclick="verificarLogin()" class="btn btn-primary w-100 fw-bold">Entrar</button>
+        <button onclick="verificarLogin()" class="btn btn-primary w-100 fw-bold shadow-sm">ENTRAR</button>
         <p id="erroLogin" class="text-danger mt-2 small" style="display:none;">Acesso negado!</p>
     </div>
 </div>
@@ -49,7 +43,7 @@
             <h2 class="fw-bold">ESTOQUE TI - SD</h2>
             <div class="d-flex align-items-center gap-2">
                 <span id="userLogado" class="badge bg-primary"></span>
-                <button class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalMinhaSenha">Alterar Senha</button>
+                <button class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalMinhaSenha">Trocar minha senha</button>
             </div>
         </div>
         <div class="col-md-6 text-end">
@@ -62,20 +56,20 @@
 
     <div class="row mb-4">
         <div class="col-md-4">
-            <div class="card p-3 shadow-sm mb-3"><h6>Total de Itens</h6><h2 id="dashTotal">0</h2></div>
-            <div class="card p-3 shadow-sm text-danger"><h6>Alertas (Baixo/Zero)</h6><h2 id="dashAlerta">0</h2></div>
+            <div class="card p-3 shadow-sm mb-3 text-center"><h6>Total de Itens</h6><h2 id="dashTotal">0</h2></div>
+            <div class="card p-3 shadow-sm text-danger text-center"><h6>Alertas (Baixo/Zero)</h6><h2 id="dashAlerta">0</h2></div>
         </div>
         <div class="col-md-8">
             <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold">Top 5 Saídas</h6>
-                <div class="chart-container"><canvas id="meuGrafico"></canvas></div>
+                <h6 class="fw-bold"><i class="bi bi-bar-chart"></i> Top 5 Saídas</h6>
+                <div style="height: 180px;"><canvas id="meuGrafico"></canvas></div>
             </div>
         </div>
     </div>
 
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <input type="text" id="inputBusca" class="form-control mb-3" placeholder="🔍 Buscar no estoque...">
+            <input type="text" id="inputBusca" class="form-control mb-3" placeholder="🔍 Buscar produto no estoque...">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead><tr><th>Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end admin-only">Excluir</th></tr></thead>
@@ -87,48 +81,37 @@
 
     <div id="secaoLogs" style="display:none;" class="mt-4">
         <div class="d-flex justify-content-between mb-2">
-            <h5>📜 Histórico</h5>
+            <h5>📜 Histórico de Movimentações</h5>
             <div>
-                <button onclick="limparHistorico()" class="btn btn-link text-danger admin-only btn-sm">Limpar Logs</button>
-                <input type="text" id="buscaLog" class="form-control form-control-sm d-inline-block w-auto" placeholder="Filtrar log...">
+                <button onclick="limparHistorico()" class="btn btn-link text-danger admin-only btn-sm">Limpar Histórico</button>
+                <input type="text" id="buscaLog" class="form-control form-control-sm d-inline-block w-auto" placeholder="Filtrar histórico...">
             </div>
         </div>
         <div class="card shadow-sm"><div class="list-group list-group-flush" id="listaLogs" style="max-height: 300px; overflow-y: auto;"></div></div>
     </div>
 </div>
 
-<div class="modal fade" id="modalMinhaSenha" tabindex="-1">
-    <div class="modal-dialog"><div class="modal-content">
-        <div class="modal-header bg-primary text-white"><h5>Alterar Minha Senha</h5></div>
-        <div class="modal-body">
-            <input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Digite sua nova senha">
-        </div>
-        <div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar Senha</button></div>
-    </div></div>
-</div>
-
 <div class="modal fade" id="modalGestaoUsuarios" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
-        <div class="modal-header bg-danger text-white"><h5>Gerenciar Usuários do Sistema</h5></div>
+        <div class="modal-header bg-danger text-white"><h5>Gestão de Usuários</h5></div>
         <div class="modal-body">
             <div class="row g-2 mb-3">
-                <div class="col-md-5"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
-                <div class="col-md-5"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
-                <div class="col-md-2"><button onclick="cadastrarUsuario()" class="btn btn-dark w-100">Add</button></div>
+                <div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
+                <div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
+                <div class="col-md-4"><button onclick="cadastrarUsuario()" class="btn btn-dark w-100">Salvar / Adicionar</button></div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm align-middle">
-                    <thead><tr><th>Usuário</th><th>Senha Atual</th><th class="text-end">Ação</th></tr></thead>
-                    <tbody id="tabelaUsuariosAdmin"></tbody>
-                </table>
-            </div>
+            <table class="table table-sm align-middle">
+                <thead><tr><th>Usuário</th><th>Senha</th><th class="text-end">Ações</th></tr></thead>
+                <tbody id="tabelaUsuariosAdmin"></tbody>
+            </table>
         </div>
     </div></div>
 </div>
 
+<div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-primary text-white"><h5>Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
 <div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
 <div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5>Novo Item</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Salvar</button></div></div></div></div>
+<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5>Novo Produto</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Salvar</button></div></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -154,34 +137,37 @@
     let userLogado = "";
     let chartInstance = null;
 
-    // --- AUTENTICAÇÃO E USUÁRIOS ---
+    // --- CARGA DE USUÁRIOS ---
     onValue(usersRef, s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
         corpoAdmin.innerHTML = '';
         Object.keys(usuariosAtuais).forEach(u => {
             corpoAdmin.innerHTML += `<tr>
-                <td>${u}</td>
-                <td><code>${usuariosAtuais[u]}</code></td>
+                <td>${u}</td><td><code>${usuariosAtuais[u]}</code></td>
                 <td class="text-end">
-                    <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-link text-danger ${u==='brunosantos'?'disabled':''}">Remover</button>
+                    <button onclick="prepararEdicao('${u}', '${usuariosAtuais[u]}')" class="btn btn-sm btn-link">Editar</button>
+                    <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-link text-danger ${u==='brunosantos'?'disabled':''}">Excluir</button>
                 </td>
             </tr>`;
         });
     });
 
     window.verificarLogin = () => {
-        const user = document.getElementById('userInput').value.toLowerCase();
-        const pass = document.getElementById('senhaInput').value;
-        
-        // Se for o admin brunosantos ou o usuário existir na base
-        if(usuariosAtuais[user] === pass || (user === "brunosantos" && pass === "prvl123")) {
-            userLogado = user;
-            document.getElementById('userLogado').innerText = user;
+        const u = document.getElementById('userInput').value.toLowerCase().trim();
+        const p = document.getElementById('senhaInput').value;
+        if(usuariosAtuais[u] === p) {
+            userLogado = u;
+            document.getElementById('userLogado').innerText = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'block';
-            if(user === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
+            if(u === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'inline-block');
         } else { document.getElementById('erroLogin').style.display = 'block'; }
+    };
+
+    window.prepararEdicao = (u, p) => {
+        document.getElementById('novoUserLogin').value = u;
+        document.getElementById('novoUserSenha').value = p;
     };
 
     window.cadastrarUsuario = () => {
@@ -194,47 +180,33 @@
         }
     };
 
-    window.removerUsuario = (u) => {
-        if(u === 'brunosantos') return;
-        if(confirm(`Remover acesso de ${u}?`)) remove(ref(db, `usuarios/${u}`));
-    };
+    window.removerUsuario = (u) => { if(u !== 'brunosantos' && confirm(`Remover acesso de ${u}?`)) remove(ref(db, `usuarios/${u}`)); };
 
     window.salvarMinhaSenha = () => {
         const nova = document.getElementById('novaSenhaPessoal').value;
-        if(nova) {
-            set(ref(db, `usuarios/${userLogado}`), nova);
-            alert("Senha alterada com sucesso!");
-            bootstrap.Modal.getInstance('#modalMinhaSenha').hide();
-        }
+        if(nova) { set(ref(db, `usuarios/${userLogado}`), nova); alert("Senha atualizada!"); bootstrap.Modal.getInstance('#modalMinhaSenha').hide(); }
     };
 
-    // --- TEMA ---
+    // --- INTERFACE ---
     window.toggleTheme = () => {
         const body = document.body;
-        const next = body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
-        body.setAttribute('data-bs-theme', next);
-        document.querySelector('.theme-toggle i').className = next === 'light' ? 'bi bi-brightness-high-fill' : 'bi bi-moon-fill';
-        renderizarGrafico();
+        body.setAttribute('data-bs-theme', body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light');
+        render();
     };
 
-    // --- GRÁFICO ---
     function renderizarGrafico() {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
         const counts = {};
-        Object.values(logsAtuais).forEach(l => {
-            if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd);
-        });
+        Object.values(logsAtuais).forEach(l => { if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd); });
         const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
-        const data = labels.map(l => counts[l]);
         if(chartInstance) chartInstance.destroy();
         chartInstance = new Chart(ctx, {
             type: 'bar',
-            data: { labels, datasets: [{ label: 'Qtd', data, backgroundColor: '#f39c12', borderRadius: 5 }] },
+            data: { labels, datasets: [{ label: 'Qtd Saídas', data: labels.map(l => counts[l]), backgroundColor: '#f39c12' }] },
             options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    // --- RENDER TABELA ESTOQUE ---
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
@@ -247,29 +219,19 @@
             const zero = p.quantidade <= 0;
             const baixo = p.quantidade <= p.estoqueMinimo;
             if(baixo) alertCount++;
-
             if(p.nome.toLowerCase().includes(f)) {
-                let statusClass = zero ? 'estoque-zero' : (baixo ? 'baixo-estoque' : '');
-                corpo.innerHTML += `<tr class="${statusClass}">
+                corpo.innerHTML += `<tr class="${zero ? 'estoque-zero' : (baixo ? 'baixo-estoque' : '')}">
                     <td>${p.nome}</td><td>${p.quantidade}</td><td>${p.estoqueMinimo}</td>
-                    <td class="text-center">
-                        <button onclick="abrirEntrada('${id}')" class="btn btn-sm btn-success">📥</button>
-                        <button onclick="abrirSaida('${id}')" class="btn btn-sm btn-danger">📤</button>
-                    </td>
-                    <td class="text-end admin-only" style="display:${userLogado==='brunosantos'?'table-cell':'none'}">
-                        <button onclick="del('${id}')" class="btn btn-link text-muted p-0"><i class="bi bi-trash"></i></button>
-                    </td>
+                    <td class="text-center"><button onclick="abrirEntrada('${id}')" class="btn btn-sm btn-success">📥</button> <button onclick="abrirSaida('${id}')" class="btn btn-sm btn-danger">📤</button></td>
+                    <td class="text-end admin-only" style="display:${userLogado==='brunosantos'?'table-cell':'none'}"><button onclick="del('${id}')" class="btn btn-link text-muted p-0"><i class="bi bi-trash"></i></button></td>
                 </tr>`;
             }
         });
         document.getElementById('dashTotal').innerText = tot;
         document.getElementById('dashAlerta').innerText = alertCount;
-
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
-            lista.innerHTML += `<div class="list-group-item small">
-                <b>${l.tipo}</b>: ${l.qtd}x ${l.prod} | OS: ${l.os || '-'} | TI: ${l.user} | ${l.data}
-            </div>`;
+            lista.innerHTML += `<div class="list-group-item small"><b>${l.tipo}</b>: ${l.qtd}x ${l.prod} | OS: ${l.os || '-'} | TI: ${l.user} | ${l.data}</div>`;
         });
         renderizarGrafico();
     }
@@ -283,11 +245,10 @@
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
         const q = parseInt(document.getElementById('qtdEntrada').value);
-        update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade + q });
+        update(ref(db, `estoque/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
         push(logsRef, { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
     };
-
     window.abrirSaida = id => { document.getElementById('idSaida').value = id; new bootstrap.Modal('#modalSaida').show(); };
     window.confirmarSaida = () => {
         const id = document.getElementById('idSaida').value;
@@ -297,14 +258,12 @@
         push(logsRef, { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
     };
-
     window.salvarNovoProduto = () => {
-        push(estoqueRef, { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value), estoqueMinimo: parseInt(document.getElementById('minNovo').value) });
+        push(estoqueRef, { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
         bootstrap.Modal.getInstance('#modalCadastro').hide();
     };
-
     window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
-    window.del = id => { if(confirm("Excluir?")) remove(ref(db, `estoque/${id}`)); };
+    window.del = id => { if(confirm("Excluir item?")) remove(ref(db, `estoque/${id}`)); };
     window.limparHistorico = () => { if(confirm("Zerar logs?")) remove(logsRef); };
     window.exportarCSV = () => {
         let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Data\n';
