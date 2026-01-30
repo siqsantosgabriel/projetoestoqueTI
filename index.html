@@ -17,32 +17,21 @@
             --bg-body: #121212; --sidebar-bg: #1a1a1a; --card-bg: #1e1e1e;
             --text-main: #e0e0e0;
         }
-
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; transition: 0.3s; overflow-x: hidden; }
-        
-        /* Layout Sidebar */
         .wrapper { display: flex; width: 100%; align-items: stretch; }
         #sidebar { min-width: 250px; max-width: 250px; background: var(--sidebar-bg); color: #fff; transition: all 0.3s; min-height: 100vh; }
         #content { width: 100%; padding: 30px; }
-
         .sidebar-header { padding: 20px; background: rgba(0,0,0,0.1); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .nav-link { color: rgba(255,255,255,0.7); padding: 15px 20px; display: block; text-decoration: none; transition: 0.2s; }
+        .nav-link { color: rgba(255,255,255,0.7); padding: 15px 20px; display: block; text-decoration: none; transition: 0.2s; cursor: pointer; }
         .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
         .nav-link.active { color: var(--accent); border-left: 4px solid var(--accent); background: rgba(255,255,255,0.05); }
-
-        /* Cards Estilizados */
         .card { background-color: var(--card-bg); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 10px; }
-        
-        /* Alertas de Estoque */
-        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .row-baixo { border-left: 5px solid #ffc107 !important; }
         .row-zero { border-left: 5px solid #dc3545 !important; background-color: rgba(220, 53, 69, 0.05); }
-
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 380px; padding: 40px; border-radius: 20px; background: #fff; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        
         .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; font-size: 24px; color: var(--primary-color); }
+        .admin-only { display: none !important; } /* Escondido por padrão */
     </style>
 </head>
 <body data-bs-theme="light">
@@ -54,123 +43,80 @@
         <input type="text" id="userInput" class="form-control form-control-lg mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control form-control-lg mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary btn-lg w-100 shadow">ENTRAR</button>
-        <p id="erroLogin" class="text-danger mt-3 small" style="display:none;">Credenciais incorretas.</p>
+        <p id="erroLogin" class="text-danger mt-3 small" style="display:none;">Acesso negado.</p>
     </div>
 </div>
 
 <div class="wrapper" id="conteudoSistema" style="display:none;">
     <nav id="sidebar">
-        <div class="sidebar-header">
-            <h4 class="fw-bold mb-0">TI - SD</h4>
-            <small class="text-muted">v2.0 Premium</small>
-        </div>
+        <div class="sidebar-header"><h4 class="fw-bold mb-0">TI - SD</h4></div>
         <ul class="list-unstyled mt-4">
-            <li><a href="#" class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
-            <li><a href="#" onclick="toggleLogs()" class="nav-link"><i class="bi bi-clock-history me-2"></i> Histórico</a></li>
-            <li class="admin-only"><a href="#" data-bs-toggle="modal" data-bs-target="#modalGestaoUsuarios" class="nav-link"><i class="bi bi-people me-2"></i> Equipe</a></li>
-            <li class="admin-only"><a href="#" onclick="exportarCSV()" class="nav-link text-success"><i class="bi bi-file-earmark-arrow-down me-2"></i> Exportar CSV</a></li>
+            <li><a class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a onclick="toggleLogs()" class="nav-link"><i class="bi bi-clock-history me-2"></i> Histórico</a></li>
+            <li class="admin-only"><a data-bs-toggle="modal" data-bs-target="#modalGestaoUsuarios" class="nav-link"><i class="bi bi-people me-2"></i> Equipe</a></li>
+            <li class="admin-only"><a onclick="exportarCSV()" class="nav-link text-success"><i class="bi bi-file-earmark-arrow-down me-2"></i> Exportar CSV</a></li>
             <hr class="mx-3 opacity-25">
-            <li><a href="#" data-bs-toggle="modal" data-bs-target="#modalMinhaSenha" class="nav-link"><i class="bi bi-person-lock me-2"></i> Minha Senha</a></li>
+            <li><a data-bs-toggle="modal" data-bs-target="#modalMinhaSenha" class="nav-link"><i class="bi bi-person-lock me-2"></i> Minha Senha</a></li>
             <li><a href="." class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
         </ul>
     </nav>
 
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h4 class="fw-bold mb-0">Dashboard</h4>
-                <p class="text-muted mb-0">Bem-vindo, <span id="userLogado" class="text-primary fw-bold"></span></p>
-            </div>
-            <div class="d-flex gap-2">
-                <i class="bi bi-brightness-high-fill theme-toggle" onclick="toggleTheme()" id="themeIcon"></i>
-                <button class="btn btn-warning fw-bold px-4" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Novo Item</button>
-            </div>
+            <div><h4 class="fw-bold mb-0">Dashboard</h4><p class="text-muted mb-0">Olá, <span id="userLogado" class="text-primary fw-bold"></span></p></div>
+            <i class="bi bi-brightness-high-fill theme-toggle" onclick="toggleTheme()" id="themeIcon"></i>
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card p-3">
-                    <div class="stat-icon bg-primary-subtle text-primary"><i class="bi bi-boxes"></i></div>
-                    <h6 class="text-muted mb-1">Total de Itens</h6>
-                    <h3 class="fw-bold mb-0" id="dashTotal">0</h3>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card p-3">
-                    <div class="stat-icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle"></i></div>
-                    <h6 class="text-muted mb-1">Críticos/Zerados</h6>
-                    <h3 class="fw-bold mb-0" id="dashAlerta">0</h3>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card p-3">
-                    <h6 class="fw-bold mb-3">Tendência de Saídas (Top 5)</h6>
-                    <div style="height: 120px;"><canvas id="meuGrafico"></canvas></div>
-                </div>
-            </div>
+            <div class="col-md-3"><div class="card p-3"><h6>Total Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
+            <div class="col-md-3"><div class="card p-3"><h6 class="text-danger">Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
+            <div class="col-md-6"><div class="card p-3"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="card-body p-0">
-                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-                    <h6 class="fw-bold mb-0">Inventário de Hardware</h6>
-                    <input type="text" id="inputBusca" class="form-control form-control-sm w-25 shadow-sm" placeholder="🔍 Buscar...">
+            <div class="p-3 border-bottom d-flex justify-content-between bg-light align-items-center">
+                <h6 class="fw-bold mb-0">Estoque Atual</h6>
+                <div class="d-flex gap-2">
+                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="Buscar...">
+                    <button class="btn btn-warning btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Item</button>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 align-middle">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Produto</th>
-                                <th>Saldo</th>
-                                <th>Mínimo</th>
-                                <th class="text-center">Operações</th>
-                                <th class="text-end pe-4 admin-only">Ação</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaCorpo"></tbody>
-                    </table>
-                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4 admin-only">Excluir</th></tr></thead>
+                    <tbody id="tabelaCorpo"></tbody>
+                </table>
             </div>
         </div>
 
         <div id="secaoLogs" style="display:none;" class="mt-4">
-            <div class="card">
-                <div class="card-header bg-white d-flex justify-content-between">
-                    <h6 class="fw-bold mb-0">Histórico Recente</h6>
-                    <input type="text" id="buscaLog" class="form-control form-control-sm w-25" placeholder="Filtrar log...">
-                </div>
-                <div class="list-group list-group-flush" id="listaLogs" style="max-height: 250px; overflow-y: auto;"></div>
-                <div class="card-footer text-center admin-only">
-                    <button onclick="limparHistorico()" class="btn btn-sm btn-link text-danger">Zerar Histórico</button>
-                </div>
-            </div>
+            <div class="card"><div class="card-header bg-white fw-bold">Histórico</div><div class="list-group list-group-flush" id="listaLogs" style="max-height: 250px; overflow-y: auto;"></div></div>
         </div>
     </div>
 </div>
 
 <div class="modal fade" id="modalGestaoUsuarios" tabindex="-1">
-    <div class="modal-dialog modal-lg"><div class="modal-content border-0">
-        <div class="modal-header bg-dark text-white"><h5>Gestão de Equipe</h5></div>
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header bg-dark text-white"><h5>Gerenciar Equipe</h5></div>
         <div class="modal-body">
-            <div class="row g-2 mb-4 p-3 bg-light rounded">
+            <div class="row g-2 mb-3 bg-light p-3 rounded">
+                <input type="hidden" id="editUserOldName">
                 <div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
                 <div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
-                <div class="col-md-4"><button onclick="cadastrarUsuario()" class="btn btn-primary w-100">Adicionar Membro</button></div>
+                <div class="col-md-4"><button onclick="cadastrarUsuario()" class="btn btn-primary w-100">Salvar Alteração</button></div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead><tr><th>Usuário</th><th>Senha</th><th class="text-end">Ações</th></tr></thead>
-                    <tbody id="tabelaUsuariosAdmin"></tbody>
-                </table>
-            </div>
+            <table class="table table-sm">
+                <thead><tr><th>Usuário</th><th>Senha</th><th class="text-end">Ações</th></tr></thead>
+                <tbody id="tabelaUsuariosAdmin"></tbody>
+            </table>
         </div>
     </div></div>
 </div>
 
-<div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
-<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Quantidade"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Gravar</button></div></div></div></div>
-<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Baixa no Estoque</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="Nº da OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar Saída</button></div></div></div></div>
-<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo de TI</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome (Ex: Monitor Dell 24')"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo Inicial"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Ponto de Ressuprimento"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
+<div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
+<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -192,11 +138,9 @@
     const logsRef = ref(db, 'logs/');
     const usersRef = ref(db, 'usuarios/');
 
-    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {};
-    let userLogado = "";
-    let chartInstance = null;
+    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", chartInstance = null;
 
-    // --- LOGIN ---
+    // --- LOGIN E PERMISSÕES ---
     onValue(usersRef, s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
@@ -217,11 +161,37 @@
             document.getElementById('userLogado').innerText = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'flex';
-            if(u === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+            if(u === "brunosantos") {
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.style.setProperty('display', 'block', 'important');
+                    if(el.tagName === 'TH' || el.tagName === 'TD') el.style.setProperty('display', 'table-cell', 'important');
+                });
+            }
         } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
-    // --- DASHBOARD & RENDERING ---
+    // --- GESTÃO DE USUÁRIOS ---
+    window.prepararEdicao = (u, p) => {
+        document.getElementById('editUserOldName').value = u;
+        document.getElementById('novoUserLogin').value = u;
+        document.getElementById('novoUserSenha').value = p;
+    };
+
+    window.cadastrarUsuario = () => {
+        const oldU = document.getElementById('editUserOldName').value;
+        const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim();
+        const newP = document.getElementById('novoUserSenha').value.trim();
+        if(newU && newP) {
+            if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`));
+            set(ref(db, `usuarios/${newU}`), newP);
+            document.getElementById('editUserOldName').value = '';
+            document.getElementById('novoUserLogin').value = '';
+            document.getElementById('novoUserSenha').value = '';
+            alert("Usuário atualizado!");
+        }
+    };
+
+    // --- FUNÇÕES GERAIS ---
     function renderizarGrafico() {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
         const counts = {};
@@ -231,7 +201,7 @@
         chartInstance = new Chart(ctx, {
             type: 'bar',
             data: { labels, datasets: [{ label: 'Saídas', data: labels.map(l => counts[l]), backgroundColor: '#ffd700', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { grid: { display: false } } }, plugins: { legend: { display: false } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
         });
     }
 
@@ -264,34 +234,18 @@
         });
         document.getElementById('dashTotal').innerText = tot;
         document.getElementById('dashAlerta').innerText = alertCount;
-        
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
-            lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center">
-                <div><b>${l.prod}</b> <span class="text-muted">(${l.tipo})</span><br><small>Por: ${l.user} | OS: ${l.os || '-'}</small></div>
-                <div class="text-end"><span class="badge rounded-pill bg-light text-dark">${l.qtd} unid</span><br><small class="text-muted">${l.data}</small></div>
-            </div>`;
+            lista.innerHTML += `<div class="list-group-item small"><b>${l.prod}</b> (${l.tipo}) - Por: ${l.user} | OS: ${l.os || '-'} | ${l.data}</div>`;
         });
         renderizarGrafico();
     }
 
-    // --- OPERAÇÕES ---
-    window.toggleTheme = () => {
-        const b = document.body;
-        const current = b.getAttribute('data-bs-theme');
-        const next = current === 'light' ? 'dark' : 'light';
-        b.setAttribute('data-bs-theme', next);
-        document.getElementById('themeIcon').className = next === 'light' ? 'bi bi-brightness-high-fill theme-toggle' : 'bi bi-moon-stars-fill theme-toggle';
-        render();
-    };
-
-    window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
-    
-    // Funções Operacionais Padrão
     onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
     onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
     document.getElementById('inputBusca').addEventListener('input', render);
-
+    window.toggleTheme = () => { document.body.setAttribute('data-bs-theme', document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light'); render(); };
+    window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
     window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
@@ -313,11 +267,9 @@
         push(estoqueRef, { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
         bootstrap.Modal.getInstance('#modalCadastro').hide();
     };
-    window.cadastrarUsuario = () => { set(ref(db, `usuarios/${document.getElementById('novoUserLogin').value.toLowerCase()}`), document.getElementById('novoUserSenha').value); };
     window.removerUsuario = u => { if(confirm("Remover?")) remove(ref(db, `usuarios/${u}`)); };
     window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); };
     window.del = id => { if(confirm("Excluir?")) remove(ref(db, `estoque/${id}`)); };
-    window.limparHistorico = () => { if(confirm("Zerar logs?")) remove(logsRef); };
     window.exportarCSV = () => {
         let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Data\n';
         Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.data}\n`);
