@@ -40,7 +40,7 @@
 
 <div id="loginOverlay">
     <div class="login-card text-center">
-        <h2 class="fw-bold mb-4" style="color:#333">ESTOQUE TI</h2>
+        <h2 class="fw-bold mb-4" style="color: #333;">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary w-100 shadow">ENTRAR</button>
@@ -95,7 +95,7 @@
                 <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">HISTÓRICO</h6>
                     <div class="d-flex gap-2 align-items-center">
-                        <input type="text" id="inputBuscaLog" class="form-control form-control-sm" placeholder="Pesquisar no histórico...">
+                        <input type="text" id="inputBuscaLog" class="form-control form-control-sm" placeholder="Pesquisar logs...">
                         <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-secondary active" onclick="filtrarLog('TUDO')">Tudo</button>
                             <button class="btn btn-outline-success" onclick="filtrarLog('ENTRADA')">Entradas</button>
@@ -128,9 +128,9 @@
 </div>
 
 <div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
-<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
+<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada de Material</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Gravar</button></div></div></div></div>
+<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Baixa no Estoque</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="Número da OS"><input type="text" id="colabSaida" class="form-control" placeholder="Colaborador / Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo de TI</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo Inicial"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -208,7 +208,6 @@
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, alertCount = 0;
 
-        // Render Estoque
         Object.keys(dadosAtuais).forEach(id => {
             const p = dadosAtuais[id]; tot++;
             const zero = p.quantidade <= 0;
@@ -230,19 +229,22 @@
             }
         });
 
-        // Render Logs
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
             const textoBusca = `${l.prod} ${l.user} ${l.os || ''} ${l.colab || ''}`.toLowerCase();
-            
             if(filtroAtual !== 'TUDO' && l.tipo !== filtroAtual) return;
             if(!textoBusca.includes(buscaLog)) return;
 
             const classeTipo = l.tipo === 'ENTRADA' ? 'log-entrada' : 'log-saida';
             const btnDelLog = userLogado === 'brunosantos' ? `<button onclick="delLog('${id}')" class="btn btn-sm text-muted p-0 ms-2"><i class="bi bi-x-circle"></i></button>` : '';
+            const recInfo = l.colab ? `| Recebedor: ${l.colab}` : '';
 
             lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center small">
-                <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) - Por: ${l.user} | OS: ${l.os || '-'} | ${l.data}</div>
+                <div>
+                    <span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) 
+                    <br>
+                    <span class="text-muted">TI: ${l.user} | OS: ${l.os || '-'} ${recInfo} | ${l.data}</span>
+                </div>
                 ${btnDelLog}
             </div>`;
         });
@@ -252,15 +254,13 @@
         renderizarGrafico();
     }
 
-    // --- FIREBASE ACTIONS ---
     onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
     onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
-    
     document.getElementById('inputBusca').addEventListener('input', render);
     document.getElementById('inputBuscaLog').addEventListener('input', render);
 
-    window.delLog = id => { if(confirm("Excluir este registro do histórico?")) remove(ref(db, `logs/${id}`)); };
-    window.del = id => { if(confirm("Deseja excluir permanentemente este item do estoque?")) remove(ref(db, `estoque/${id}`)); };
+    window.delLog = id => { if(confirm("Excluir este registro?")) remove(ref(db, `logs/${id}`)); };
+    window.del = id => { if(confirm("Deseja excluir este item?")) remove(ref(db, `estoque/${id}`)); };
 
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
@@ -269,6 +269,7 @@
         update(ref(db, `estoque/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
         push(logsRef, { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
+        limparForms();
     };
 
     window.confirmarSaida = () => {
@@ -278,6 +279,7 @@
         update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade - q });
         push(logsRef, { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
+        limparForms();
     };
 
     window.salvarNovoProduto = () => {
@@ -285,6 +287,7 @@
         if(!n) return;
         push(estoqueRef, { nome: n, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
         bootstrap.Modal.getInstance('#modalCadastro').hide();
+        limparForms();
     };
 
     window.renderizarGrafico = () => {
@@ -305,12 +308,12 @@
     window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
     window.abrirSaida = id => { document.getElementById('idSaida').value = id; new bootstrap.Modal('#modalSaida').show(); };
     window.prepararEdicao = (u, p) => { document.getElementById('editUserOldName').value = u; document.getElementById('novoUserLogin').value = u; document.getElementById('novoUserSenha').value = p; };
-    window.cadastrarUsuario = () => { const oldU = document.getElementById('editUserOldName').value; const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim(); const newP = document.getElementById('novoUserSenha').value.trim(); if(newU && newP) { if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`)); set(ref(db, `usuarios/${newU}`), newP); alert("Usuário atualizado!"); } };
+    window.cadastrarUsuario = () => { const oldU = document.getElementById('editUserOldName').value; const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim(); const newP = document.getElementById('novoUserSenha').value.trim(); if(newU && newP) { if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`)); set(ref(db, `usuarios/${newU}`), newP); alert("Usuário salvo!"); } };
     window.removerUsuario = u => { if(confirm("Remover usuário?")) remove(ref(db, `usuarios/${u}`)); };
     window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); };
     window.exportarCSV = () => {
-        let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Data\n';
-        Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.data}\n`);
+        let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Recebedor,Data\n';
+        Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.colab||''},${l.data}\n`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = 'estoque_sd.csv'; a.click();
     };
 </script>
