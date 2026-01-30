@@ -26,11 +26,20 @@
         .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
         .card { background-color: var(--card-bg); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .card-header-custom { background-color: var(--header-bg) !important; color: var(--text-main); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; }
+        
+        /* Estilos de Alerta */
         .row-baixo { border-left: 5px solid #ffc107 !important; }
         .row-zero { border-left: 5px solid #dc3545 !important; background-color: rgba(220, 53, 69, 0.05); }
+        
+        /* Botões de link devem seguir a cor do texto do tema */
+        .btn-link { color: var(--text-main); text-decoration: none; }
+        .btn-link:hover { color: var(--primary-color); }
+
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 380px; padding: 40px; border-radius: 20px; background: #fff; }
         .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; font-size: 24px; color: var(--primary-color); }
+        
+        /* Forçar visibilidade administrativa */
         .admin-only { display: none !important; }
         .log-entrada { color: #198754; font-weight: bold; }
         .log-saida { color: #dc3545; font-weight: bold; }
@@ -40,7 +49,7 @@
 
 <div id="loginOverlay">
     <div class="login-card text-center">
-        <h2 class="fw-bold mb-4" style="color: #333;">ESTOQUE TI</h2>
+        <h2 class="fw-bold mb-4" style="color: #333">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary w-100 shadow">ENTRAR</button>
@@ -84,7 +93,7 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-hover mb-0 align-middle">
-                    <thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4 admin-only">Excluir</th></tr></thead>
+                    <thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th id="colExcluir" class="text-end pe-4 admin-only">Excluir</th></tr></thead>
                     <tbody id="tabelaCorpo"></tbody>
                 </table>
             </div>
@@ -113,7 +122,7 @@
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header bg-dark text-white"><h5>Gerenciar Equipe</h5></div>
         <div class="modal-body">
-            <div class="row g-2 mb-3 bg-light p-3 rounded">
+            <div class="row g-2 mb-3 bg-light p-3 rounded text-dark">
                 <input type="hidden" id="editUserOldName">
                 <div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
                 <div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
@@ -128,9 +137,9 @@
 </div>
 
 <div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
-<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada de Material</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Gravar</button></div></div></div></div>
-<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Baixa no Estoque</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="Número da OS"><input type="text" id="colabSaida" class="form-control" placeholder="Colaborador / Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo de TI</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo Inicial"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
+<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -168,7 +177,7 @@
         corpoAdmin.innerHTML = '';
         Object.keys(usuariosAtuais).forEach(u => {
             corpoAdmin.innerHTML += `<tr><td>${u}</td><td><code>***</code></td><td class="text-end">
-                <button onclick="prepararEdicao('${u}', '${usuariosAtuais[u]}')" class="btn btn-sm btn-outline-dark me-1">Editar</button>
+                <button onclick="prepararEdicao('${u}', '${usuariosAtuais[u]}')" class="btn btn-sm btn-link me-1">Editar</button>
                 <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-outline-danger ${u==='brunosantos'?'disabled':''}">X</button>
             </td></tr>`;
         });
@@ -182,6 +191,8 @@
             document.getElementById('userLogado').innerText = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'flex';
+            
+            // Ativa visualização administrativa
             if(u === "brunosantos") {
                 document.querySelectorAll('.admin-only').forEach(el => {
                     el.style.setProperty('display', 'block', 'important');
@@ -223,7 +234,7 @@
                         <button onclick="abrirSaida('${id}')" class="btn btn-sm btn-outline-danger mx-1"><i class="bi bi-dash-lg"></i></button>
                     </td>
                     <td class="text-end pe-4 admin-only" style="display:${userLogado==='brunosantos'?'table-cell':'none'}">
-                        <button onclick="del('${id}')" class="btn btn-sm text-muted"><i class="bi bi-trash"></i></button>
+                        <button onclick="del('${id}')" class="btn btn-sm text-muted p-0"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>`;
             }
@@ -256,6 +267,7 @@
 
     onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
     onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
+    
     document.getElementById('inputBusca').addEventListener('input', render);
     document.getElementById('inputBuscaLog').addEventListener('input', render);
 
@@ -269,7 +281,6 @@
         update(ref(db, `estoque/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
         push(logsRef, { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
-        limparForms();
     };
 
     window.confirmarSaida = () => {
@@ -279,7 +290,6 @@
         update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade - q });
         push(logsRef, { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
-        limparForms();
     };
 
     window.salvarNovoProduto = () => {
@@ -287,7 +297,6 @@
         if(!n) return;
         push(estoqueRef, { nome: n, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
         bootstrap.Modal.getInstance('#modalCadastro').hide();
-        limparForms();
     };
 
     window.renderizarGrafico = () => {
