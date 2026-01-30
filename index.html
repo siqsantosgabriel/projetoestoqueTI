@@ -19,8 +19,10 @@
             background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center;
         }
         
-        .baixo-estoque { background-color: #ffcccc !important; color: #900 !important; }
-        .estoque-zero { background-color: #ff4444 !important; color: #fff !important; font-weight: bold; }
+        /* Cores de Alerta com !important para garantir visibilidade */
+        .baixo-estoque { background-color: #ffdada !important; color: #a00 !important; }
+        .estoque-zero { background-color: #ff4d4d !important; color: #fff !important; font-weight: bold; }
+        [data-bs-theme="dark"] .baixo-estoque { background-color: #5a1a1a !important; color: #ffbaba !important; }
         
         .theme-toggle { position: fixed; bottom: 20px; right: 20px; z-index: 1000; border-radius: 50px; }
         .admin-only { display: none; }
@@ -45,12 +47,15 @@
     <div class="row mb-4 align-items-center">
         <div class="col-md-6">
             <h2 class="fw-bold">ESTOQUE TI - SD</h2>
-            <p class="text-muted mb-0">Usuário: <span id="userLogado" class="badge bg-primary"></span></p>
+            <div class="d-flex align-items-center gap-2">
+                <span id="userLogado" class="badge bg-primary"></span>
+                <button class="btn btn-sm btn-link p-0 text-decoration-none" data-bs-toggle="modal" data-bs-target="#modalMinhaSenha">Alterar Senha</button>
+            </div>
         </div>
         <div class="col-md-6 text-end">
             <button onclick="toggleLogs()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history"></i> Histórico</button>
             <button onclick="exportarCSV()" class="btn btn-outline-success btn-sm admin-only"><i class="bi bi-file-earmark-spreadsheet"></i> Exportar</button>
-            <button class="btn btn-danger btn-sm admin-only" data-bs-toggle="modal" data-bs-target="#modalAdminSenhas"><i class="bi bi-shield-lock"></i> Senhas</button>
+            <button class="btn btn-danger btn-sm admin-only" data-bs-toggle="modal" data-bs-target="#modalGestaoUsuarios"><i class="bi bi-people-fill"></i> Usuários</button>
             <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Item</button>
         </div>
     </div>
@@ -58,14 +63,12 @@
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card p-3 shadow-sm mb-3"><h6>Total de Itens</h6><h2 id="dashTotal">0</h2></div>
-            <div class="card p-3 shadow-sm text-danger"><h6>Críticos/Zerados</h6><h2 id="dashAlerta">0</h2></div>
+            <div class="card p-3 shadow-sm text-danger"><h6>Alertas (Baixo/Zero)</h6><h2 id="dashAlerta">0</h2></div>
         </div>
         <div class="col-md-8">
             <div class="card p-3 shadow-sm">
-                <h6 class="fw-bold"><i class="bi bi-graph-up-arrow"></i> Itens Mais Retirados (Saídas)</h6>
-                <div class="chart-container">
-                    <canvas id="meuGrafico"></canvas>
-                </div>
+                <h6 class="fw-bold">Top 5 Saídas</h6>
+                <div class="chart-container"><canvas id="meuGrafico"></canvas></div>
             </div>
         </div>
     </div>
@@ -75,7 +78,7 @@
             <input type="text" id="inputBusca" class="form-control mb-3" placeholder="🔍 Buscar no estoque...">
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
-                    <thead><tr><th>Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ação</th><th class="text-end admin-only">Excluir</th></tr></thead>
+                    <thead><tr><th>Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end admin-only">Excluir</th></tr></thead>
                     <tbody id="tabelaCorpo"></tbody>
                 </table>
             </div>
@@ -84,9 +87,9 @@
 
     <div id="secaoLogs" style="display:none;" class="mt-4">
         <div class="d-flex justify-content-between mb-2">
-            <h5>Histórico</h5>
+            <h5>📜 Histórico</h5>
             <div>
-                <button onclick="limparHistorico()" class="btn btn-link text-danger admin-only btn-sm">Limpar Tudo</button>
+                <button onclick="limparHistorico()" class="btn btn-link text-danger admin-only btn-sm">Limpar Logs</button>
                 <input type="text" id="buscaLog" class="form-control form-control-sm d-inline-block w-auto" placeholder="Filtrar log...">
             </div>
         </div>
@@ -94,9 +97,37 @@
     </div>
 </div>
 
-<div class="modal fade" id="modalAdminSenhas" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Admin Senhas</h5></div><div class="modal-body"><select id="selectUserSenha" class="form-select mb-2"></select><input type="text" id="novaSenhaAdmin" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarNovaSenhaAdmin()" class="btn btn-danger w-100">Salvar</button></div></div></div></div>
-<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control mb-2" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control mb-2" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalMinhaSenha" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header bg-primary text-white"><h5>Alterar Minha Senha</h5></div>
+        <div class="modal-body">
+            <input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Digite sua nova senha">
+        </div>
+        <div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar Senha</button></div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalGestaoUsuarios" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header bg-danger text-white"><h5>Gerenciar Usuários do Sistema</h5></div>
+        <div class="modal-body">
+            <div class="row g-2 mb-3">
+                <div class="col-md-5"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
+                <div class="col-md-5"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
+                <div class="col-md-2"><button onclick="cadastrarUsuario()" class="btn btn-dark w-100">Add</button></div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead><tr><th>Usuário</th><th>Senha Atual</th><th class="text-end">Ação</th></tr></thead>
+                    <tbody id="tabelaUsuariosAdmin"></tbody>
+                </table>
+            </div>
+        </div>
+    </div></div>
+</div>
+
+<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
 <div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-dark text-white"><h5>Novo Item</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Salvar</button></div></div></div></div>
 
 <script type="module">
@@ -117,33 +148,34 @@
     const db = getDatabase(app);
     const estoqueRef = ref(db, 'estoque/');
     const logsRef = ref(db, 'logs/');
-    const senhasRef = ref(db, 'config/senhas/');
+    const usersRef = ref(db, 'usuarios/');
 
-    let dadosAtuais = {}, logsAtuais = {}, senhasAtuais = {};
+    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {};
     let userLogado = "";
     let chartInstance = null;
 
-    // --- TEMA ---
-    window.toggleTheme = () => {
-        const body = document.body;
-        const next = body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
-        body.setAttribute('data-bs-theme', next);
-        document.querySelector('.theme-toggle i').className = next === 'light' ? 'bi bi-brightness-high-fill' : 'bi bi-moon-fill';
-        renderizarGrafico(); // Atualiza cores do gráfico
-    };
-
-    // --- LOGIN ---
-    onValue(senhasRef, s => { 
-        senhasAtuais = s.val() || {};
-        const select = document.getElementById('selectUserSenha');
-        select.innerHTML = '';
-        Object.keys(senhasAtuais).forEach(u => select.innerHTML += `<option value="${u}">${u}</option>`);
+    // --- AUTENTICAÇÃO E USUÁRIOS ---
+    onValue(usersRef, s => {
+        usuariosAtuais = s.val() || {};
+        const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
+        corpoAdmin.innerHTML = '';
+        Object.keys(usuariosAtuais).forEach(u => {
+            corpoAdmin.innerHTML += `<tr>
+                <td>${u}</td>
+                <td><code>${usuariosAtuais[u]}</code></td>
+                <td class="text-end">
+                    <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-link text-danger ${u==='brunosantos'?'disabled':''}">Remover</button>
+                </td>
+            </tr>`;
+        });
     });
 
     window.verificarLogin = () => {
         const user = document.getElementById('userInput').value.toLowerCase();
         const pass = document.getElementById('senhaInput').value;
-        if(senhasAtuais[user] === pass || (!senhasAtuais[user] && pass === "prvl123")) {
+        
+        // Se for o admin brunosantos ou o usuário existir na base
+        if(usuariosAtuais[user] === pass || (user === "brunosantos" && pass === "prvl123")) {
             userLogado = user;
             document.getElementById('userLogado').innerText = user;
             document.getElementById('loginOverlay').style.display = 'none';
@@ -152,64 +184,73 @@
         } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
+    window.cadastrarUsuario = () => {
+        const u = document.getElementById('novoUserLogin').value.toLowerCase().trim();
+        const p = document.getElementById('novoUserSenha').value.trim();
+        if(u && p) {
+            set(ref(db, `usuarios/${u}`), p);
+            document.getElementById('novoUserLogin').value = '';
+            document.getElementById('novoUserSenha').value = '';
+        }
+    };
+
+    window.removerUsuario = (u) => {
+        if(u === 'brunosantos') return;
+        if(confirm(`Remover acesso de ${u}?`)) remove(ref(db, `usuarios/${u}`));
+    };
+
+    window.salvarMinhaSenha = () => {
+        const nova = document.getElementById('novaSenhaPessoal').value;
+        if(nova) {
+            set(ref(db, `usuarios/${userLogado}`), nova);
+            alert("Senha alterada com sucesso!");
+            bootstrap.Modal.getInstance('#modalMinhaSenha').hide();
+        }
+    };
+
+    // --- TEMA ---
+    window.toggleTheme = () => {
+        const body = document.body;
+        const next = body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+        body.setAttribute('data-bs-theme', next);
+        document.querySelector('.theme-toggle i').className = next === 'light' ? 'bi bi-brightness-high-fill' : 'bi bi-moon-fill';
+        renderizarGrafico();
+    };
+
     // --- GRÁFICO ---
     function renderizarGrafico() {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
         const counts = {};
-        
-        // Processa logs para contar saídas
         Object.values(logsAtuais).forEach(l => {
-            if(l.tipo === 'SAÍDA') {
-                counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd);
-            }
+            if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd);
         });
-
         const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
         const data = labels.map(l => counts[l]);
-
         if(chartInstance) chartInstance.destroy();
-
-        const isDark = document.body.getAttribute('data-bs-theme') === 'dark';
-        
         chartInstance = new Chart(ctx, {
             type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Qtd Retirada',
-                    data: data,
-                    backgroundColor: isDark ? '#f39c12' : '#2c3e50',
-                    borderRadius: 5
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, ticks: { color: isDark ? '#aaa' : '#666' } },
-                    x: { ticks: { color: isDark ? '#aaa' : '#666' } }
-                },
-                plugins: { legend: { labels: { color: isDark ? '#eee' : '#333' } } }
-            }
+            data: { labels, datasets: [{ label: 'Qtd', data, backgroundColor: '#f39c12', borderRadius: 5 }] },
+            options: { responsive: true, maintainAspectRatio: false }
         });
     }
 
-    // --- RENDER GERAL ---
+    // --- RENDER TABELA ESTOQUE ---
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
         const f = document.getElementById('inputBusca').value.toLowerCase();
-        const fl = document.getElementById('buscaLog').value.toLowerCase();
-        
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, alertCount = 0;
 
         Object.keys(dadosAtuais).forEach(id => {
             const p = dadosAtuais[id]; tot++;
-            if(p.quantidade <= p.estoqueMinimo) alertCount++;
+            const zero = p.quantidade <= 0;
+            const baixo = p.quantidade <= p.estoqueMinimo;
+            if(baixo) alertCount++;
+
             if(p.nome.toLowerCase().includes(f)) {
-                let sClass = p.quantidade <= 0 ? 'estoque-zero' : (p.quantidade <= p.estoqueMinimo ? 'baixo-estoque' : '');
-                corpo.innerHTML += `<tr class="${sClass}">
+                let statusClass = zero ? 'estoque-zero' : (baixo ? 'baixo-estoque' : '');
+                corpo.innerHTML += `<tr class="${statusClass}">
                     <td>${p.nome}</td><td>${p.quantidade}</td><td>${p.estoqueMinimo}</td>
                     <td class="text-center">
                         <button onclick="abrirEntrada('${id}')" class="btn btn-sm btn-success">📥</button>
@@ -226,11 +267,9 @@
 
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
-            if(JSON.stringify(l).toLowerCase().includes(fl)) {
-                lista.innerHTML += `<div class="list-group-item small">
-                    <b>${l.tipo}</b>: ${l.qtd}x ${l.prod} | OS: ${l.os || '-'} | TI: ${l.user} | Para: ${l.colab || '-'}
-                </div>`;
-            }
+            lista.innerHTML += `<div class="list-group-item small">
+                <b>${l.tipo}</b>: ${l.qtd}x ${l.prod} | OS: ${l.os || '-'} | TI: ${l.user} | ${l.data}
+            </div>`;
         });
         renderizarGrafico();
     }
@@ -238,9 +277,8 @@
     onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
     onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
     document.getElementById('inputBusca').addEventListener('input', render);
-    document.getElementById('buscaLog').addEventListener('input', render);
 
-    // --- OPS ---
+    // --- OPERAÇÕES ---
     window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
@@ -265,18 +303,13 @@
         bootstrap.Modal.getInstance('#modalCadastro').hide();
     };
 
-    window.salvarNovaSenhaAdmin = () => {
-        set(ref(db, `config/senhas/${document.getElementById('selectUserSenha').value}`), document.getElementById('novaSenhaAdmin').value);
-        alert("Senha alterada!"); bootstrap.Modal.getInstance('#modalAdminSenhas').hide();
-    };
-
     window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
-    window.del = id => { if(confirm("Apagar?")) remove(ref(db, `estoque/${id}`)); };
-    window.limparHistorico = () => { if(confirm("Limpar logs?")) remove(logsRef); };
+    window.del = id => { if(confirm("Excluir?")) remove(ref(db, `estoque/${id}`)); };
+    window.limparHistorico = () => { if(confirm("Zerar logs?")) remove(logsRef); };
     window.exportarCSV = () => {
-        let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Colaborador,Data\n';
-        Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.colab||''},${l.data}\n`);
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = 'historico_ti_sd.csv'; a.click();
+        let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Data\n';
+        Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.data}\n`);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = 'historico.csv'; a.click();
     };
 </script>
 
