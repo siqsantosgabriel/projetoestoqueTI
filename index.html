@@ -33,6 +33,8 @@
         .login-card { width: 380px; padding: 40px; border-radius: 20px; background: #fff; }
         .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; font-size: 24px; color: var(--primary-color); }
         .admin-only { display: none !important; }
+        .log-entrada { color: #198754; font-weight: bold; }
+        .log-saida { color: #dc3545; font-weight: bold; }
     </style>
 </head>
 <body data-bs-theme="light" class="setor-sd">
@@ -103,7 +105,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA4lwZX_GwaTuMAjmfZB3N-zaF869DV6rE",
@@ -133,21 +135,33 @@
         });
     });
 
-    window.verificarLogin = () => {
+    window.verificarLogin = async () => {
         const u = document.getElementById('userInput').value.toLowerCase().trim();
         const p = document.getElementById('senhaInput').value;
         const info = usuariosAtuais[u];
         
-        // TRAVA MESTRE: Permite brunosantos mesmo que o banco esteja vazio
-        if ((u === "brunosantos" && p === "prvl123") || (info && info.senha === p)) {
+        // LOGICA DE AUTO-CRIAÇÃO PARA BRUNOSANTOS
+        if (u === "brunosantos" && p === "prvl123") {
+            if (!info) {
+                await set(ref(db, `usuarios/brunosantos`), { senha: "prvl123", setor: "SD" });
+            }
             userLogado = u;
-            setorAtivo = (u === "brunosantos") ? "SD" : (info.setor || "SD");
-            document.getElementById('userLogado').innerText = u;
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('conteudoSistema').style.display = 'flex';
-            if(u === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
-            atualizarSetorVisual();
-        } else { document.getElementById('erroLogin').style.display = 'block'; }
+            setorAtivo = "SD";
+        } else if (info && info.senha === p) {
+            userLogado = u;
+            setorAtivo = info.setor || "SD";
+        } else {
+            document.getElementById('erroLogin').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('userLogado').innerText = userLogado;
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('conteudoSistema').style.display = 'flex';
+        if(userLogado === "brunosantos") {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
+        }
+        atualizarSetorVisual();
     };
 
     function atualizarSetorVisual() {
