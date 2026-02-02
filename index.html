@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESTOQUE TI - SD</title>
+    <title>SISTEMA TI - SD & NOC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -11,24 +11,25 @@
     <style>
         :root {
             --bg-body: #f8f9fa; --sidebar-bg: #212529; --card-bg: #ffffff;
-            --primary-color: #0d6efd; --text-main: #333; --accent: #ffd700; --header-bg: #f8f9fa;
+            --primary-color: #0d6efd; --text-main: #333; --accent: #ffd700;
         }
         [data-bs-theme="dark"] {
-            --bg-body: #121212; --sidebar-bg: #1a1a1a; --card-bg: #1e1e1e;
-            --text-main: #e0e0e0; --header-bg: #252525;
+            --bg-body: #121212; --sidebar-bg: #1a1a1a; --card-bg: #1e1e1e; --text-main: #e0e0e0;
         }
+        /* Cores por Setor */
+        .setor-sd { --primary-color: #0d6efd; --accent: #ffd700; }
+        .setor-noc { --primary-color: #198754; --accent: #20c997; }
+
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; transition: 0.3s; overflow-x: hidden; }
         .wrapper { display: flex; width: 100%; align-items: stretch; }
         #sidebar { min-width: 250px; max-width: 250px; background: var(--sidebar-bg); color: #fff; transition: all 0.3s; min-height: 100vh; }
-        #content { width: 100%; padding: 30px; }
+        #content { width: 100%; padding: 30px; transition: 0.3s; }
         .sidebar-header { padding: 20px; background: rgba(0,0,0,0.1); text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .nav-link { color: rgba(255,255,255,0.7); padding: 15px 20px; display: block; text-decoration: none; transition: 0.2s; cursor: pointer; }
+        .nav-link { color: rgba(255,255,255,0.7); padding: 15px 20px; display: block; text-decoration: none; cursor: pointer; }
         .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
-        .card { background-color: var(--card-bg); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .card-header-custom { background-color: var(--header-bg) !important; color: var(--text-main); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; }
+        .card { background-color: var(--card-bg); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
         .row-baixo { border-left: 5px solid #ffc107 !important; }
         .row-zero { border-left: 5px solid #dc3545 !important; background-color: rgba(220, 53, 69, 0.05); }
-        .btn-link { color: var(--text-main); text-decoration: none; }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { width: 380px; padding: 40px; border-radius: 20px; background: #fff; }
         .theme-toggle { position: fixed; top: 20px; right: 20px; z-index: 1000; cursor: pointer; font-size: 24px; color: var(--primary-color); }
@@ -37,11 +38,11 @@
         .log-saida { color: #dc3545; font-weight: bold; }
     </style>
 </head>
-<body data-bs-theme="light">
+<body data-bs-theme="light" class="setor-sd">
 
 <div id="loginOverlay">
-    <div class="login-card text-center">
-        <h2 class="fw-bold mb-4" style="color: #333">ESTOQUE TI</h2>
+    <div class="login-card text-center text-dark">
+        <h2 class="fw-bold mb-4">ESTOQUE TI</h2>
         <input type="text" id="userInput" class="form-control mb-3" placeholder="Usuário">
         <input type="password" id="senhaInput" class="form-control mb-4" placeholder="Senha">
         <button onclick="verificarLogin()" class="btn btn-primary w-100 shadow">ENTRAR</button>
@@ -51,12 +52,24 @@
 
 <div class="wrapper" id="conteudoSistema" style="display:none;">
     <nav id="sidebar">
-        <div class="sidebar-header"><h4 class="fw-bold mb-0">TI - SD</h4></div>
+        <div class="sidebar-header">
+            <h4 class="fw-bold mb-0">TI - <span id="setorDisplay">SD</span></h4>
+        </div>
         <ul class="list-unstyled mt-4">
             <li><a class="nav-link active"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
             <li><a onclick="toggleLogs()" class="nav-link"><i class="bi bi-clock-history me-2"></i> Histórico</a></li>
-            <li class="admin-only"><a data-bs-toggle="modal" data-bs-target="#modalGestaoUsuarios" class="nav-link"><i class="bi bi-people me-2"></i> Equipe</a></li>
-            <li class="admin-only"><a onclick="exportarCSV()" class="nav-link text-success"><i class="bi bi-file-earmark-arrow-down me-2"></i> Exportar CSV</a></li>
+            <li class="admin-only">
+                <div class="px-3 mt-3 mb-2 small text-muted text-uppercase">Administração</div>
+                <a data-bs-toggle="modal" data-bs-target="#modalGestaoUsuarios" class="nav-link"><i class="bi bi-people me-2"></i> Equipe</a>
+                <div class="dropdown px-3 mt-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">Trocar Visão</button>
+                    <ul class="dropdown-menu dropdown-menu-dark">
+                        <li><a class="dropdown-item" onclick="mudarSetorAdmin('SD')">Estoque SD</a></li>
+                        <li><a class="dropdown-item" onclick="mudarSetorAdmin('NOC')">Estoque NOC</a></li>
+                    </ul>
+                </div>
+            </li>
+            <li class="admin-only mt-2"><a onclick="exportarCSV()" class="nav-link text-success"><i class="bi bi-file-earmark-arrow-down me-2"></i> Exportar CSV</a></li>
             <hr class="mx-3 opacity-25">
             <li><a data-bs-toggle="modal" data-bs-target="#modalMinhaSenha" class="nav-link"><i class="bi bi-person-lock me-2"></i> Minha Senha</a></li>
             <li><a href="." class="nav-link text-danger"><i class="bi bi-box-arrow-right me-2"></i> Sair</a></li>
@@ -65,21 +78,21 @@
 
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div><h4 class="fw-bold mb-0">Painel de Controle</h4><p class="text-muted mb-0">Logado: <span id="userLogado" class="text-primary fw-bold"></span></p></div>
+            <div><h4 class="fw-bold mb-0">Painel <span id="setorTitle">SD</span></h4><p class="text-muted mb-0">Usuário: <span id="userLogado" class="text-primary fw-bold"></span></p></div>
             <i class="bi bi-brightness-high-fill theme-toggle" onclick="toggleTheme()" id="themeIcon"></i>
         </div>
 
         <div class="row mb-4">
-            <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Total Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 shadow-sm text-danger"><h6>Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
-            <div class="col-md-6"><div class="card p-3 shadow-sm"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
+            <div class="col-md-3"><div class="card p-3"><h6>Itens em Estoque</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
+            <div class="col-md-3"><div class="card p-3 text-danger"><h6>Alertas Críticos</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
+            <div class="col-md-6"><div class="card p-3"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
         </div>
 
         <div class="card shadow-sm border-0">
-            <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">ESTOQUE ATUAL</h6>
+            <div class="p-3 border-bottom d-flex justify-content-between bg-light align-items-center rounded-top">
+                <h6 class="mb-0 fw-bold">INVENTÁRIO <span id="tabelaLabel">SD</span></h6>
                 <div class="d-flex gap-2">
-                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="Buscar no estoque...">
+                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="Buscar...">
                     <button class="btn btn-warning btn-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ Item</button>
                 </div>
             </div>
@@ -92,11 +105,11 @@
         </div>
 
         <div id="secaoLogs" style="display:none;" class="mt-4">
-            <div class="card shadow-sm">
-                <div class="p-3 card-header-custom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0">HISTÓRICO</h6>
+            <div class="card">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top">
+                    <h6 class="mb-0 fw-bold">LOGS <span id="logLabel">SD</span></h6>
                     <div class="d-flex gap-2 align-items-center">
-                        <input type="text" id="inputBuscaLog" class="form-control form-control-sm" placeholder="Pesquisar logs...">
+                        <input type="text" id="inputBuscaLog" class="form-control form-control-sm" placeholder="Pesquisar...">
                         <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-secondary active" onclick="filtrarLog('TUDO')">Tudo</button>
                             <button class="btn btn-outline-success" onclick="filtrarLog('ENTRADA')">Entradas</button>
@@ -104,7 +117,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="list-group list-group-flush" id="listaLogs" style="max-height: 400px; overflow-y: auto;"></div>
+                <div class="list-group list-group-flush" id="listaLogs" style="max-height: 300px; overflow-y: auto;"></div>
             </div>
         </div>
     </div>
@@ -113,7 +126,7 @@
 <div class="modal fade" id="modalGestaoUsuarios" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content">
         <div class="modal-header bg-dark text-white d-flex justify-content-between align-items-center w-100">
-            <h5 class="mb-0">Gerenciar Equipe</h5>
+            <h5 class="mb-0">Equipe TI</h5>
             <button onclick="mostrarFormUsuario()" class="btn btn-warning btn-sm fw-bold">+ NOVO USUÁRIO</button>
         </div>
         <div class="modal-body">
@@ -121,26 +134,31 @@
                 <h6 id="tituloFormUser" class="fw-bold mb-3 text-primary">Novo Usuário</h6>
                 <div class="row g-2">
                     <input type="hidden" id="editUserOldName">
-                    <div class="col-md-4"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
-                    <div class="col-md-4"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
-                    <div class="col-md-4 d-flex gap-2">
+                    <div class="col-md-3"><input type="text" id="novoUserLogin" class="form-control" placeholder="Login"></div>
+                    <div class="col-md-3"><input type="text" id="novoUserSenha" class="form-control" placeholder="Senha"></div>
+                    <div class="col-md-3">
+                        <select id="novoUserSetor" class="form-select">
+                            <option value="SD">Setor SD</option>
+                            <option value="NOC">Setor NOC</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex gap-1">
                         <button onclick="cadastrarUsuario()" class="btn btn-primary flex-grow-1">Salvar</button>
                         <button onclick="esconderFormUsuario()" class="btn btn-outline-secondary">X</button>
                     </div>
                 </div>
             </div>
-
             <table class="table table-sm align-middle">
-                <thead><tr><th>Usuário</th><th>Senha</th><th class="text-end pe-3">Ações</th></tr></thead>
+                <thead><tr><th>Usuário</th><th>Setor</th><th>Ações</th></tr></thead>
                 <tbody id="tabelaUsuariosAdmin"></tbody>
             </table>
         </div>
     </div></div>
 </div>
 
-<div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Minha Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
-<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
+<div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Mudar Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100">Atualizar</button></div></div></div></div>
+<div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control" placeholder="Qtd"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100">Gravar</button></div></div></div></div>
+<div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-danger text-white"><h5>Baixa Estoque</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2" placeholder="Nº OS"><input type="text" id="colabSaida" class="form-control" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100">Confirmar</button></div></div></div></div>
 <div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header bg-warning"><h5>Novo Ativo</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100">Cadastrar</button></div></div></div></div>
 
 <script type="module">
@@ -159,11 +177,9 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const estoqueRef = ref(db, 'estoque/');
-    const logsRef = ref(db, 'logs/');
-    const usersRef = ref(db, 'usuarios/');
-
-    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", chartInstance = null, filtroAtual = 'TUDO';
+    
+    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {};
+    let userLogado = "", setorAtivo = "SD", chartInstance = null, filtroLogAtivo = 'TUDO';
 
     function limparForms() {
         ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal', 'novoUserLogin', 'novoUserSenha', 'editUserOldName'].forEach(id => {
@@ -171,15 +187,16 @@
         });
     }
 
-    document.querySelectorAll('.modal').forEach(m => m.addEventListener('hidden.bs.modal', () => { limparForms(); esconderFormUsuario(); }));
-
-    onValue(usersRef, s => {
+    onValue(ref(db, 'usuarios/'), s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
         corpoAdmin.innerHTML = '';
         Object.keys(usuariosAtuais).forEach(u => {
-            corpoAdmin.innerHTML += `<tr><td class="ps-2 fw-semibold">${u}</td><td><code>***</code></td><td class="text-end">
-                <button onclick="prepararEdicao('${u}', '${usuariosAtuais[u]}')" class="btn btn-sm btn-link me-1">Editar</button>
+            const info = usuariosAtuais[u];
+            const p = typeof info === 'object' ? info.senha : info;
+            const setor = info.setor || 'SD';
+            corpoAdmin.innerHTML += `<tr><td>${u}</td><td><span class="badge bg-secondary">${setor}</span></td><td class="text-end">
+                <button onclick="prepararEdicao('${u}', '${p}', '${setor}')" class="btn btn-sm btn-link me-1">Editar</button>
                 <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-outline-danger ${u==='brunosantos'?'disabled':''}">X</button>
             </td></tr>`;
         });
@@ -188,54 +205,71 @@
     window.verificarLogin = () => {
         const u = document.getElementById('userInput').value.toLowerCase().trim();
         const p = document.getElementById('senhaInput').value;
-        if(usuariosAtuais[u] === p || (u === "brunosantos" && p === "prvl123")) {
+        const info = usuariosAtuais[u];
+        const senhaDb = typeof info === 'object' ? info.senha : info;
+        const setorDb = info.setor || 'SD';
+
+        if(senhaDb === p || (u === "brunosantos" && p === "prvl123")) {
             userLogado = u;
+            setorAtivo = (u === "brunosantos") ? "SD" : setorDb;
             document.getElementById('userLogado').innerText = u;
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('conteudoSistema').style.display = 'flex';
-            if(u === "brunosantos") {
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    el.style.setProperty('display', 'block', 'important');
-                    if(el.tagName === 'TH' || el.tagName === 'TD') el.style.setProperty('display', 'table-cell', 'important');
-                });
-            }
-            render();
+            if(u === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
+            atualizarSetorVisual();
         } else { document.getElementById('erroLogin').style.display = 'block'; }
     };
 
-    // --- LÓGICA DE USUÁRIOS ---
-    window.mostrarFormUsuario = () => {
-        limparForms();
-        document.getElementById('tituloFormUser').innerText = "Novo Usuário";
-        document.getElementById('formUsuarioAdmin').style.display = 'block';
-    };
+    function atualizarSetorVisual() {
+        document.body.className = setorAtivo === 'SD' ? 'setor-sd' : 'setor-noc';
+        document.getElementById('setorDisplay').innerText = setorAtivo;
+        document.getElementById('setorTitle').innerText = setorAtivo;
+        document.getElementById('tabelaLabel').innerText = setorAtivo;
+        document.getElementById('logLabel').innerText = setorAtivo;
+        conectarFirebaseSetor();
+    }
 
-    window.esconderFormUsuario = () => {
-        document.getElementById('formUsuarioAdmin').style.display = 'none';
-        limparForms();
-    };
+    window.mudarSetorAdmin = (novoSetor) => { setorAtivo = novoSetor; atualizarSetorVisual(); };
 
-    window.prepararEdicao = (u, p) => {
+    function conectarFirebaseSetor() {
+        onValue(ref(db, `estoque_${setorAtivo}/`), s => { dadosAtuais = s.val() || {}; render(); });
+        onValue(ref(db, `logs_${setorAtivo}/`), s => { logsAtuais = s.val() || {}; render(); });
+    }
+
+    window.mostrarFormUsuario = () => { limparForms(); document.getElementById('formUsuarioAdmin').style.display = 'block'; };
+    window.esconderFormUsuario = () => { document.getElementById('formUsuarioAdmin').style.display = 'none'; limparForms(); };
+    window.prepararEdicao = (u, p, s) => {
         document.getElementById('editUserOldName').value = u;
         document.getElementById('novoUserLogin').value = u;
         document.getElementById('novoUserSenha').value = p;
-        document.getElementById('tituloFormUser').innerText = "Editar Usuário: " + u;
+        document.getElementById('novoUserSetor').value = s;
         document.getElementById('formUsuarioAdmin').style.display = 'block';
     };
-
     window.cadastrarUsuario = () => {
         const oldU = document.getElementById('editUserOldName').value;
         const newU = document.getElementById('novoUserLogin').value.toLowerCase().trim();
         const newP = document.getElementById('novoUserSenha').value.trim();
+        const newS = document.getElementById('novoUserSetor').value;
         if(newU && newP) {
             if(oldU && oldU !== newU) remove(ref(db, `usuarios/${oldU}`));
-            set(ref(db, `usuarios/${newU}`), newP);
+            set(ref(db, `usuarios/${newU}`), { senha: newP, setor: newS });
             esconderFormUsuario();
-            alert("Usuário salvo com sucesso!");
-        } else { alert("Preencha todos os campos!"); }
+        }
     };
 
-    // --- RENDERS ---
+    function renderizarGrafico() {
+        const ctx = document.getElementById('meuGrafico').getContext('2d');
+        const counts = {};
+        Object.values(logsAtuais).forEach(l => { if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd); });
+        const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ label: 'Saídas', data: labels.map(l => counts[l]), backgroundColor: setorAtivo === 'SD' ? '#ffd700' : '#20c997', borderRadius: 4 }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+    }
+
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
@@ -267,12 +301,11 @@
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
             const textoBusca = `${l.prod} ${l.user} ${l.os || ''} ${l.colab || ''}`.toLowerCase();
-            if(filtroAtual !== 'TUDO' && l.tipo !== filtroAtual) return;
+            if(filtroLogAtivo !== 'TUDO' && l.tipo !== filtroLogAtivo) return;
             if(!textoBusca.includes(buscaLog)) return;
-            const classeTipo = l.tipo === 'ENTRADA' ? 'log-entrada' : 'log-saida';
             const btnDelLog = userLogado === 'brunosantos' ? `<button onclick="delLog('${id}')" class="btn btn-sm text-muted p-0 ms-2"><i class="bi bi-x-circle"></i></button>` : '';
-            lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center small">
-                <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) - Por: ${l.user} | OS: ${l.os || '-'} | Rec: ${l.colab || '-'} | ${l.data}</div>
+            lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-middle small">
+                <div><span class="${l.tipo==='ENTRADA'?'log-entrada':'log-saida'}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) | TI: ${l.user} | OS: ${l.os || '-'} | Rec: ${l.colab || '-'}</div>
                 ${btnDelLog}
             </div>`;
         });
@@ -281,20 +314,14 @@
         renderizarGrafico();
     }
 
-    onValue(estoqueRef, s => { dadosAtuais = s.val() || {}; render(); });
-    onValue(logsRef, s => { logsAtuais = s.val() || {}; render(); });
-    document.getElementById('inputBusca').addEventListener('input', render);
-    document.getElementById('inputBuscaLog').addEventListener('input', render);
     window.toggleTheme = () => { document.body.setAttribute('data-bs-theme', document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light'); render(); };
     window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
-    window.delLog = id => { if(confirm("Excluir log?")) remove(ref(db, `logs/${id}`)); };
-    window.del = id => { if(confirm("Excluir item?")) remove(ref(db, `estoque/${id}`)); };
     window.abrirEntrada = id => { document.getElementById('idEntrada').value = id; new bootstrap.Modal('#modalEntrada').show(); };
     window.confirmarEntrada = () => {
         const id = document.getElementById('idEntrada').value;
         const q = parseInt(document.getElementById('qtdEntrada').value);
-        update(ref(db, `estoque/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
-        push(logsRef, { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
+        update(ref(db, `estoque_${setorAtivo}/${id}`), { quantidade: (dadosAtuais[id].quantidade || 0) + q });
+        push(ref(db, `logs_${setorAtivo}/`), { tipo: 'ENTRADA', prod: dadosAtuais[id].nome, qtd: q, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalEntrada').hide();
     };
     window.abrirSaida = id => { document.getElementById('idSaida').value = id; new bootstrap.Modal('#modalSaida').show(); };
@@ -302,36 +329,23 @@
         const id = document.getElementById('idSaida').value;
         const q = parseInt(document.getElementById('qtdSaida').value);
         if(dadosAtuais[id].quantidade < q) return alert("Saldo insuficiente");
-        update(ref(db, `estoque/${id}`), { quantidade: dadosAtuais[id].quantidade - q });
-        push(logsRef, { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
+        update(ref(db, `estoque_${setorAtivo}/${id}`), { quantidade: dadosAtuais[id].quantidade - q });
+        push(ref(db, `logs_${setorAtivo}/`), { tipo: 'SAÍDA', prod: dadosAtuais[id].nome, qtd: q, os: document.getElementById('osSaida').value, colab: document.getElementById('colabSaida').value, user: userLogado, data: new Date().toLocaleDateString() });
         bootstrap.Modal.getInstance('#modalSaida').hide();
     };
     window.salvarNovoProduto = () => {
-        push(estoqueRef, { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
+        push(ref(db, `estoque_${setorAtivo}/`), { nome: document.getElementById('nomeNovo').value, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
         bootstrap.Modal.getInstance('#modalCadastro').hide();
     };
-    window.renderizarGrafico = () => {
-        const ctx = document.getElementById('meuGrafico').getContext('2d');
-        const counts = {};
-        Object.values(logsAtuais).forEach(l => { if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd); });
-        const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels, datasets: [{ label: 'Saídas', data: labels.map(l => counts[l]), backgroundColor: '#ffd700', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
-    };
-    window.filtrarLog = (tipo) => { filtroAtual = tipo; document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active')); if(event) event.target.classList.add('active'); render(); };
-    window.removerUsuario = u => { if(confirm("Remover usuário?")) remove(ref(db, `usuarios/${u}`)); };
-    window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}`), document.getElementById('novaSenhaPessoal').value); alert("Senha alterada!"); };
+    window.filtrarLog = (t) => { filtroLogAtivo = t; render(); };
+    window.delLog = id => { if(confirm("Excluir?")) remove(ref(db, `logs_${setorAtivo}/${id}`)); };
+    window.del = id => { if(confirm("Excluir?")) remove(ref(db, `estoque_${setorAtivo}/${id}`)); };
     window.exportarCSV = () => {
         let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Recebedor,Data\n';
         Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.colab||''},${l.data}\n`);
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = 'estoque_sd.csv'; a.click();
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = `estoque_${setorAtivo}.csv`; a.click();
     };
 </script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
