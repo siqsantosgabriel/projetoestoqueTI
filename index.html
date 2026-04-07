@@ -104,19 +104,8 @@
             </div>
         </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="p-3 card-header-custom d-flex justify-content-between align-items-center rounded-top">
-                <h6 class="mb-0 fw-bold">ESTOQUE <span id="tabelaLabel">SD</span></h6>
-                <div class="d-flex gap-2">
-                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="🔍 Buscar item...">
-                    <button class="btn btn-warning btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ ITEM</button>
-                </div>
-            </div>
-            <div class="table-responsive"><table class="table table-hover mb-0 align-middle"><thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4">Excluir</th></tr></thead><tbody id="tabelaCorpo"></tbody></table></div>
-        </div>
-        
-        <div id="secaoLogs" style="display:none;" class="mt-4">
-            <div class="card shadow-sm">
+        <div id="secaoLogs" style="display:none;" class="mb-4">
+            <div class="card shadow-sm mb-0">
                 <div class="p-3 card-header-custom d-flex justify-content-between align-items-center rounded-top">
                     <h6 class="mb-0 fw-bold">MOVIMENTAÇÕES <span id="logLabel">SD</span></h6>
                     <div class="d-flex gap-2 align-items-center">
@@ -131,6 +120,18 @@
                 <div class="list-group list-group-flush" id="listaLogs" style="max-height: 400px; overflow-y: auto;"></div>
             </div>
         </div>
+
+        <div class="card shadow-sm border-0">
+            <div class="p-3 card-header-custom d-flex justify-content-between align-items-center rounded-top">
+                <h6 class="mb-0 fw-bold">ESTOQUE <span id="tabelaLabel">SD</span></h6>
+                <div class="d-flex gap-2">
+                    <input type="text" id="inputBusca" class="form-control form-control-sm" placeholder="🔍 Buscar item...">
+                    <button class="btn btn-warning btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ ITEM</button>
+                </div>
+            </div>
+            <div class="table-responsive"><table class="table table-hover mb-0 align-middle"><thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4">Excluir</th></tr></thead><tbody id="tabelaCorpo"></tbody></table></div>
+        </div>
+        
     </div>
 </div>
 
@@ -239,24 +240,18 @@
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, al = 0;
 
-        // Converter dadosAtuais para Array para facilitar a Ordenação
         let produtosArray = Object.keys(dadosAtuais).map(id => ({ id: id, ...dadosAtuais[id] }));
 
-        // ORDENAÇÃO (Alertas primeiro, depois ordem Alfabética)
         produtosArray.sort((a, b) => {
             const alertaA = a.quantidade <= a.estoqueMinimo;
             const alertaB = b.quantidade <= b.estoqueMinimo;
-
-            // Se o botão de filtro estiver ativo, joga os alertas para o topo
             if (filtroAlertaAtivo) {
                 if (alertaA && !alertaB) return -1;
                 if (!alertaA && alertaB) return 1;
             }
-            // Ordem alfabética sempre
             return a.nome.localeCompare(b.nome);
         });
 
-        // Loop nos produtos já ordenados
         produtosArray.forEach(p => {
             tot++;
             const critico = p.quantidade < p.estoqueMinimo || p.quantidade <= 0;
@@ -279,7 +274,6 @@
             }
         });
 
-        // Logs
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
             const textoBusca = `${l.prod} ${l.user} ${l.os || ''} ${l.colab || ''}`.toLowerCase();
@@ -300,28 +294,23 @@
 
     window.renderizarGrafico = () => {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
-        const mesFiltro = document.getElementById('mesFiltroGrafico').value; // Formato: 'YYYY-MM'
+        const mesFiltro = document.getElementById('mesFiltroGrafico').value; 
         
         const counts = {};
         
         Object.values(logsAtuais).forEach(l => { 
-            // Validação da Data do log (que está em DD/MM/YYYY) para comparar com o filtro
             let logMes = "";
             if (l.data && l.data.includes('/')) {
                 const p = l.data.split('/');
                 if (p.length === 3) logMes = `${p[2]}-${p[1].padStart(2, '0')}`;
             }
-
-            if (mesFiltro && logMes !== mesFiltro) return; // Filtro Pelo Mês
-
+            if (mesFiltro && logMes !== mesFiltro) return; 
             if (!counts[l.prod]) counts[l.prod] = { entrada: 0, saida: 0 };
             if (l.tipo === 'SAÍDA') counts[l.prod].saida += parseInt(l.qtd);
             if (l.tipo === 'ENTRADA') counts[l.prod].entrada += parseInt(l.qtd);
         });
 
-        // Pegar os top 5 produtos com maior volume de entrada/saida juntos
         const labels = Object.keys(counts).sort((a,b) => (counts[b].saida + counts[b].entrada) - (counts[a].saida + counts[a].entrada)).slice(0, 5);
-        
         const dataSaida = labels.map(l => counts[l].saida);
         const dataEntrada = labels.map(l => counts[l].entrada);
 
