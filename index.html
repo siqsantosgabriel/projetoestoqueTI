@@ -86,12 +86,7 @@
                     <button class="btn btn-warning btn-sm fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCadastro">+ ITEM</button>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4">Excluir</th></tr></thead>
-                    <tbody id="tabelaCorpo"></tbody>
-                </table>
-            </div>
+            <div class="table-responsive"><table class="table table-hover mb-0 align-middle"><thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4 admin-only">Excluir</th></tr></thead><tbody id="tabelaCorpo"></tbody></table></div>
         </div>
         <div id="secaoLogs" style="display:none;" class="mt-4">
             <div class="card shadow-sm">
@@ -161,6 +156,7 @@
         const u = document.getElementById('userInput').value.toLowerCase().trim();
         const p = document.getElementById('senhaInput').value;
         const info = usuariosAtuais[u];
+
         if ((u === "brunosantos" && p === "prvl123") || (info && info.senha === p)) {
             if (u === "brunosantos" && (!info || info.senha !== "prvl123")) await set(ref(db, `usuarios/brunosantos`), { senha: "prvl123", setor: "SD" });
             userLogado = u;
@@ -199,20 +195,26 @@
 
         Object.keys(dadosAtuais).forEach(id => {
             const p = dadosAtuais[id]; tot++;
-            const zero = p.quantidade <= 0;
-            const baixo = p.quantidade <= p.estoqueMinimo;
-            if(baixo) al++;
+            
+            // Regra matemática corrigida:
+            // Vermelho se quantidade < minimo. Amarelo se quantidade == minimo. Verde se > minimo.
+            const critico = p.quantidade < p.estoqueMinimo || p.quantidade <= 0;
+            const alerta = p.quantidade === p.estoqueMinimo && p.quantidade > 0;
+            
+            if(critico || alerta) al++;
+            
             if(p.nome.toLowerCase().includes(buscaProd)) {
-                corpo.innerHTML += `<tr class="${zero ? 'row-zero' : (baixo ? 'row-baixo' : '')}">
+                let btnDel = userLogado === 'brunosantos' ? `<td class="text-end pe-4 admin-only" style="display:table-cell!important"><button onclick="del('${id}')" class="btn btn-sm text-muted p-0 shadow-none"><i class="bi bi-trash"></i></button></td>` : '';
+                corpo.innerHTML += `<tr class="${critico ? 'row-zero' : (alerta ? 'row-baixo' : '')}">
                     <td class="ps-4 fw-semibold">${p.nome}</td>
-                    <td><span class="badge ${zero ? 'bg-danger' : (baixo ? 'bg-warning text-dark' : 'bg-success')}">${p.quantidade}</span></td>
+                    <td><span class="badge ${critico ? 'bg-danger' : (alerta ? 'bg-warning text-dark' : 'bg-success')}">${p.quantidade}</span></td>
                     <td>${p.estoqueMinimo}</td>
                     <td class="text-center">
                         <button onclick="abrirEntrada('${id}')" class="btn btn-sm btn-outline-success" title="Entrada"><i class="bi bi-plus-lg"></i></button>
                         <button onclick="abrirSaida('${id}')" class="btn btn-sm btn-outline-danger mx-1" title="Saída"><i class="bi bi-dash-lg"></i></button>
                         <button onclick="editarProduto('${id}', '${p.nome}', ${p.estoqueMinimo})" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></button>
                     </td>
-                    <td class="text-end pe-4"><button onclick="del('${id}')" class="btn btn-sm text-muted p-0 shadow-none"><i class="bi bi-trash"></i></button></td>
+                    ${btnDel}
                 </tr>`;
             }
         });
