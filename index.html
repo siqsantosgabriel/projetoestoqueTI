@@ -73,11 +73,37 @@
             <div><h4 class="fw-bold mb-0">Gestão <span id="setorTitle">SD</span></h4><p class="text-muted mb-0">Usuário: <span id="userLogado" class="text-primary fw-bold"></span></p></div>
             <i class="bi bi-brightness-high-fill theme-toggle" onclick="toggleTheme()" id="themeIcon"></i>
         </div>
-        <div class="row mb-4 text-center">
-            <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
-            <div class="col-md-3"><div class="card p-3 shadow-sm text-danger"><h6>Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
-            <div class="col-md-6"><div class="card p-3 shadow-sm"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
+        
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div class="card p-3 shadow-sm h-100 d-flex flex-column justify-content-center text-center">
+                    <h6>Total Itens</h6>
+                    <h3 class="fw-bold mb-0" id="dashTotal">0</h3>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3 mb-md-0">
+                <div class="card p-3 shadow-sm text-danger h-100 d-flex flex-column justify-content-center text-center" style="cursor: pointer; transition: 0.2s;" onclick="toggleFiltroAlerta()" id="cardAlertas" title="Clique para priorizar os itens em alerta na tabela">
+                    <h6>Alertas</h6>
+                    <h3 class="fw-bold mb-0" id="dashAlerta">0</h3>
+                    <small class="mt-1 fw-semibold text-muted" style="font-size: 0.75rem; transition: 0.2s;" id="lblFiltroAlerta">Clique para priorizar</small>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card p-3 shadow-sm h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="mb-0 fw-bold" style="font-size: 0.9rem;">Movimentações (Entrada/Saída)</h6>
+                        <div class="d-flex gap-1">
+                            <input type="month" id="mesFiltroGrafico" class="form-control form-control-sm" style="max-width: 130px; font-size: 0.8rem;" onchange="renderizarGrafico()" title="Escolha o mês/ano">
+                            <button class="btn btn-sm btn-outline-secondary p-1" onclick="document.getElementById('mesFiltroGrafico').value=''; renderizarGrafico();" title="Limpar Mês (Ver Tudo)"><i class="bi bi-x"></i></button>
+                        </div>
+                    </div>
+                    <div style="height: 120px;"><canvas id="meuGrafico"></canvas></div>
+                </div>
+            </div>
         </div>
+
         <div class="card shadow-sm border-0">
             <div class="p-3 card-header-custom d-flex justify-content-between align-items-center rounded-top">
                 <h6 class="mb-0 fw-bold">ESTOQUE <span id="tabelaLabel">SD</span></h6>
@@ -88,6 +114,7 @@
             </div>
             <div class="table-responsive"><table class="table table-hover mb-0 align-middle"><thead><tr><th class="ps-4">Produto</th><th>Saldo</th><th>Mín</th><th class="text-center">Ações</th><th class="text-end pe-4">Excluir</th></tr></thead><tbody id="tabelaCorpo"></tbody></table></div>
         </div>
+        
         <div id="secaoLogs" style="display:none;" class="mt-4">
             <div class="card shadow-sm">
                 <div class="p-3 card-header-custom d-flex justify-content-between align-items-center rounded-top">
@@ -129,7 +156,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", setorAtivo = "SD", chartInstance = null, filtroLogAtivo = 'TUDO';
+    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", setorAtivo = "SD";
+    let chartInstance = null, filtroLogAtivo = 'TUDO', filtroAlertaAtivo = false;
 
     function limparForms() {
         ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal', 'novoUserLogin', 'novoUserSenha', 'editUserOldName'].forEach(id => {
@@ -185,6 +213,24 @@
         onValue(ref(db, `logs_${setorAtivo}/`), s => { logsAtuais = s.val() || {}; render(); });
     }
 
+    window.toggleFiltroAlerta = () => {
+        filtroAlertaAtivo = !filtroAlertaAtivo;
+        const card = document.getElementById('cardAlertas');
+        const lbl = document.getElementById('lblFiltroAlerta');
+        if(filtroAlertaAtivo) {
+            card.classList.remove('text-danger');
+            card.classList.add('bg-danger', 'text-white');
+            lbl.innerText = "ALERTA PRIORIZADO";
+            lbl.classList.replace('text-muted', 'text-white-50');
+        } else {
+            card.classList.remove('bg-danger', 'text-white');
+            card.classList.add('text-danger');
+            lbl.innerText = "Clique para priorizar";
+            lbl.classList.replace('text-white-50', 'text-muted');
+        }
+        render();
+    };
+
     function render() {
         const corpo = document.getElementById('tabelaCorpo');
         const lista = document.getElementById('listaLogs');
@@ -193,49 +239,113 @@
         corpo.innerHTML = ''; lista.innerHTML = '';
         let tot = 0, al = 0;
 
-        Object.keys(dadosAtuais).forEach(id => {
-            const p = dadosAtuais[id]; tot++;
-            
+        // Converter dadosAtuais para Array para facilitar a Ordenação
+        let produtosArray = Object.keys(dadosAtuais).map(id => ({ id: id, ...dadosAtuais[id] }));
+
+        // ORDENAÇÃO (Alertas primeiro, depois ordem Alfabética)
+        produtosArray.sort((a, b) => {
+            const alertaA = a.quantidade <= a.estoqueMinimo;
+            const alertaB = b.quantidade <= b.estoqueMinimo;
+
+            // Se o botão de filtro estiver ativo, joga os alertas para o topo
+            if (filtroAlertaAtivo) {
+                if (alertaA && !alertaB) return -1;
+                if (!alertaA && alertaB) return 1;
+            }
+            // Ordem alfabética sempre
+            return a.nome.localeCompare(b.nome);
+        });
+
+        // Loop nos produtos já ordenados
+        produtosArray.forEach(p => {
+            tot++;
             const critico = p.quantidade < p.estoqueMinimo || p.quantidade <= 0;
             const alerta = p.quantidade === p.estoqueMinimo && p.quantidade > 0;
-            
             if(critico || alerta) al++;
             
             if(p.nome.toLowerCase().includes(buscaProd)) {
-                // BOTÃO DELETAR PRODUTO AGORA VISÍVEL PARA TODOS
-                let btnDel = `<td class="text-end pe-4"><button onclick="del('${id}')" class="btn btn-sm text-muted p-0 shadow-none"><i class="bi bi-trash"></i></button></td>`;
-                
+                let btnDel = `<td class="text-end pe-4"><button onclick="del('${p.id}')" class="btn btn-sm text-muted p-0 shadow-none"><i class="bi bi-trash"></i></button></td>`;
                 corpo.innerHTML += `<tr class="${critico ? 'row-zero' : (alerta ? 'row-baixo' : '')}">
                     <td class="ps-4 fw-semibold">${p.nome}</td>
                     <td><span class="badge ${critico ? 'bg-danger' : (alerta ? 'bg-warning text-dark' : 'bg-success')}">${p.quantidade}</span></td>
                     <td>${p.estoqueMinimo}</td>
                     <td class="text-center">
-                        <button onclick="abrirEntrada('${id}')" class="btn btn-sm btn-outline-success" title="Entrada"><i class="bi bi-plus-lg"></i></button>
-                        <button onclick="abrirSaida('${id}')" class="btn btn-sm btn-outline-danger mx-1" title="Saída"><i class="bi bi-dash-lg"></i></button>
-                        <button onclick="editarProduto('${id}', '${p.nome}', ${p.estoqueMinimo})" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></button>
+                        <button onclick="abrirEntrada('${p.id}')" class="btn btn-sm btn-outline-success" title="Entrada"><i class="bi bi-plus-lg"></i></button>
+                        <button onclick="abrirSaida('${p.id}')" class="btn btn-sm btn-outline-danger mx-1" title="Saída"><i class="bi bi-dash-lg"></i></button>
+                        <button onclick="editarProduto('${p.id}', '${p.nome}', ${p.estoqueMinimo})" class="btn btn-sm btn-outline-primary" title="Editar Nome/Mínimo"><i class="bi bi-pencil"></i></button>
                     </td>
                     ${btnDel}
                 </tr>`;
             }
         });
 
+        // Logs
         Object.keys(logsAtuais).reverse().forEach(id => {
             const l = logsAtuais[id];
             const textoBusca = `${l.prod} ${l.user} ${l.os || ''} ${l.colab || ''}`.toLowerCase();
             if(filtroLogAtivo !== 'TUDO' && l.tipo !== filtroLogAtivo) return;
             if(!textoBusca.includes(buscaLog)) return;
             const classeTipo = l.tipo === 'ENTRADA' ? 'log-entrada' : 'log-saida';
-            // LIXEIRA DOS LOGS CONTINUA APENAS PARA ADMIN
             const btnDelLog = userLogado === 'brunosantos' ? `<button onclick="delLog('${id}')" class="btn btn-sm text-muted p-0 ms-2"><i class="bi bi-x-circle"></i></button>` : '';
             lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center small">
                 <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) | TI: ${l.user} | OS: ${l.os || '-'} | Rec: ${l.colab || '-'} | ${l.data}</div>
                 ${btnDelLog}
             </div>`;
         });
+        
         document.getElementById('dashTotal').innerText = tot;
         document.getElementById('dashAlerta').innerText = al;
         renderizarGrafico();
     }
+
+    window.renderizarGrafico = () => {
+        const ctx = document.getElementById('meuGrafico').getContext('2d');
+        const mesFiltro = document.getElementById('mesFiltroGrafico').value; // Formato: 'YYYY-MM'
+        
+        const counts = {};
+        
+        Object.values(logsAtuais).forEach(l => { 
+            // Validação da Data do log (que está em DD/MM/YYYY) para comparar com o filtro
+            let logMes = "";
+            if (l.data && l.data.includes('/')) {
+                const p = l.data.split('/');
+                if (p.length === 3) logMes = `${p[2]}-${p[1].padStart(2, '0')}`;
+            }
+
+            if (mesFiltro && logMes !== mesFiltro) return; // Filtro Pelo Mês
+
+            if (!counts[l.prod]) counts[l.prod] = { entrada: 0, saida: 0 };
+            if (l.tipo === 'SAÍDA') counts[l.prod].saida += parseInt(l.qtd);
+            if (l.tipo === 'ENTRADA') counts[l.prod].entrada += parseInt(l.qtd);
+        });
+
+        // Pegar os top 5 produtos com maior volume de entrada/saida juntos
+        const labels = Object.keys(counts).sort((a,b) => (counts[b].saida + counts[b].entrada) - (counts[a].saida + counts[a].entrada)).slice(0, 5);
+        
+        const dataSaida = labels.map(l => counts[l].saida);
+        const dataEntrada = labels.map(l => counts[l].entrada);
+
+        if(chartInstance) chartInstance.destroy();
+        chartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { 
+                labels, 
+                datasets: [
+                    { label: 'Entradas', data: dataEntrada, backgroundColor: '#198754', borderRadius: 4 },
+                    { label: 'Saídas', data: dataSaida, backgroundColor: '#dc3545', borderRadius: 4 }
+                ] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: true, position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } },
+                scales: { 
+                    x: { ticks: { font: { size: 10 } } },
+                    y: { beginAtZero: true, ticks: { precision: 0, font: { size: 10 } } }
+                }
+            }
+        });
+    };
 
     window.editarProduto = (id, nomeAtual, minAtual) => {
         const novoNome = prompt("Novo nome do produto:", nomeAtual);
@@ -287,19 +397,6 @@
         let csv = 'sep=,\nTipo,Produto,Quantidade,OS,Responsavel,Recebedor,Data\n';
         Object.values(logsAtuais).forEach(l => csv += `${l.tipo},${l.prod},${l.qtd},${l.os||''},${l.user},${l.colab||''},${l.data}\n`);
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: 'text/csv' })); a.download = `estoque_${setorAtivo}.csv`; a.click();
-    };
-
-    window.renderizarGrafico = () => {
-        const ctx = document.getElementById('meuGrafico').getContext('2d');
-        const counts = {};
-        Object.values(logsAtuais).forEach(l => { if(l.tipo === 'SAÍDA') counts[l.prod] = (counts[l.prod] || 0) + parseInt(l.qtd); });
-        const labels = Object.keys(counts).sort((a,b) => counts[b] - counts[a]).slice(0, 5);
-        if(chartInstance) chartInstance.destroy();
-        chartInstance = new Chart(ctx, {
-            type: 'bar',
-            data: { labels, datasets: [{ label: 'Saídas', data: labels.map(l => counts[l]), backgroundColor: setorAtivo === 'SD' ? '#ffd700' : '#20c997', borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-        });
     };
 
     window.prepararEdicao = (u, p, s) => { document.getElementById('editUserOldName').value = u; document.getElementById('novoUserLogin').value = u; document.getElementById('novoUserSenha').value = p; document.getElementById('novoUserSetor').value = s; document.getElementById('formUsuarioAdmin').style.display = 'block'; };
