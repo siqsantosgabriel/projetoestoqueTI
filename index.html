@@ -22,6 +22,7 @@
         .nav-link:hover { background: rgba(255,255,255,0.1); color: var(--accent); }
         .card { background-color: var(--card-bg); border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid var(--primary-color); }
         .card-header-custom { background-color: var(--header-bg) !important; color: var(--text-main); border-bottom: 1px solid rgba(0,0,0,0.1); font-weight: bold; }
+        .btn-link { color: var(--text-main); text-decoration: none; }
         .row-baixo { border-left: 5px solid #ffc107 !important; }
         .row-zero { border-left: 5px solid #dc3545 !important; background-color: rgba(220, 53, 69, 0.05); }
         #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; }
@@ -69,10 +70,10 @@
 
     <div id="content">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <div><h4 class="fw-bold mb-0">Gestão <span id="setorTitle">SD</span></h4><p class="text-muted mb-0">Usuário: <span id="userLogado" class="text-primary fw-bold"></span></p></div>
+            <div><h4 class="fw-bold mb-0">Gestão <span id="setorTitle">SD</span></h4><p class="text-muted mb-0">Logado: <span id="userLogado" class="text-primary fw-bold"></span></p></div>
             <i class="bi bi-brightness-high-fill theme-toggle" onclick="toggleTheme()" id="themeIcon"></i>
         </div>
-        <div class="row mb-4 text-center">
+        <div class="row mb-4">
             <div class="col-md-3"><div class="card p-3 shadow-sm"><h6>Itens</h6><h3 class="fw-bold" id="dashTotal">0</h3></div></div>
             <div class="col-md-3"><div class="card p-3 shadow-sm text-danger"><h6>Alertas</h6><h3 class="fw-bold" id="dashAlerta">0</h3></div></div>
             <div class="col-md-6"><div class="card p-3 shadow-sm"><div style="height: 120px;"><canvas id="meuGrafico"></canvas></div></div></div>
@@ -115,7 +116,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, onValue, update, push, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    import { getDatabase, ref, set, onValue, update, push, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA4lwZX_GwaTuMAjmfZB3N-zaF869DV6rE",
@@ -137,6 +138,8 @@
         });
     }
 
+    document.querySelectorAll('.modal').forEach(m => m.addEventListener('hidden.bs.modal', limparForms));
+
     onValue(ref(db, 'usuarios/'), s => {
         usuariosAtuais = s.val() || {};
         const corpoAdmin = document.getElementById('tabelaUsuariosAdmin');
@@ -144,7 +147,7 @@
         Object.keys(usuariosAtuais).forEach(u => {
             const info = usuariosAtuais[u];
             corpoAdmin.innerHTML += `<tr><td class="ps-2 fw-semibold">${u}</td><td><span class="badge bg-secondary">${info.setor || 'SD'}</span></td><td class="text-end pe-2">
-                <button onclick="prepararEdicao('${u}', '${info.senha}', '${info.setor || 'SD'}')" class="btn btn-sm btn-link me-1 text-decoration-none shadow-none">Editar</button>
+                <button onclick="prepararEdicao('${u}', '${info.senha}', '${info.setor || 'SD'}')" class="btn btn-sm btn-link me-1 shadow-none">Editar</button>
                 <button onclick="removerUsuario('${u}')" class="btn btn-sm btn-outline-danger ${u==='brunosantos'?'disabled':''} shadow-none">X</button>
             </td></tr>`;
         });
@@ -153,17 +156,25 @@
     window.verificarLogin = async () => {
         const u = document.getElementById('userInput').value.toLowerCase().trim();
         const p = document.getElementById('senhaInput').value;
-        const info = usuariosAtuais[u];
-        if ((u === "brunosantos" && p === "prvl123") || (info && info.senha === p)) {
-            if (u === "brunosantos" && !info) await set(ref(db, `usuarios/brunosantos`), { senha: "prvl123", setor: "SD" });
+        
+        // RESET MESTRE PARA BRUNOSANTOS
+        if (u === "brunosantos" && p === "prvl123") {
+            await set(ref(db, `usuarios/brunosantos`), { senha: "prvl123", setor: "SD" });
             userLogado = u;
-            setorAtivo = (u === "brunosantos") ? "SD" : (info.setor || "SD");
-            document.getElementById('userLogado').innerText = u;
-            document.getElementById('loginOverlay').style.display = 'none';
-            document.getElementById('conteudoSistema').style.display = 'flex';
-            if(u === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
-            atualizarSetorVisual();
-        } else { document.getElementById('erroLogin').style.display = 'block'; }
+            setorAtivo = "SD";
+        } else if (usuariosAtuais[u] && (usuariosAtuais[u].senha === p || usuariosAtuais[u] === p)) {
+            userLogado = u;
+            setorAtivo = usuariosAtuais[u].setor || "SD";
+        } else {
+            document.getElementById('erroLogin').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('userLogado').innerText = userLogado;
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('conteudoSistema').style.display = 'flex';
+        if(userLogado === "brunosantos") document.querySelectorAll('.admin-only').forEach(el => el.style.setProperty('display', 'block', 'important'));
+        atualizarSetorVisual();
     };
 
     function atualizarSetorVisual() {
@@ -214,9 +225,8 @@
             if(!textoBusca.includes(buscaLog)) return;
             const classeTipo = l.tipo === 'ENTRADA' ? 'log-entrada' : 'log-saida';
             const btnDelLog = userLogado === 'brunosantos' ? `<button onclick="delLog('${id}')" class="btn btn-sm text-muted p-0 ms-2"><i class="bi bi-x-circle"></i></button>` : '';
-            const recInfo = l.colab ? `| Rec: ${l.colab}` : '';
             lista.innerHTML += `<div class="list-group-item d-flex justify-content-between align-items-center small">
-                <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) | TI: ${l.user} | OS: ${l.os || '-'} ${recInfo} | ${l.data}</div>
+                <div><span class="${classeTipo}">${l.tipo}</span>: <b>${l.prod}</b> (${l.qtd}x) | TI: ${l.user} | OS: ${l.os || '-'} | Rec: ${l.colab || '-'} | ${l.data}</div>
                 ${btnDelLog}
             </div>`;
         });
