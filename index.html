@@ -139,7 +139,7 @@
 <div class="modal fade" id="modalMinhaSenha" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content"><div class="modal-header"><h5>Mudar Senha</h5></div><div class="modal-body"><input type="password" id="novaSenhaPessoal" class="form-control shadow-sm" placeholder="Nova Senha"></div><div class="modal-footer"><button onclick="salvarMinhaSenha()" class="btn btn-primary w-100 shadow-sm">Atualizar</button></div></div></div></div>
 <div class="modal fade" id="modalEntrada" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-success text-white"><h5>Entrada</h5></div><div class="modal-body"><input type="hidden" id="idEntrada"><input type="number" id="qtdEntrada" class="form-control shadow-sm" placeholder="Quantidade"></div><div class="modal-footer"><button onclick="confirmarEntrada()" class="btn btn-success w-100 shadow-sm">Confirmar</button></div></div></div></div>
 <div class="modal fade" id="modalSaida" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-danger text-white"><h5>Saída</h5></div><div class="modal-body"><input type="hidden" id="idSaida"><input type="number" id="qtdSaida" class="form-control mb-2 shadow-sm" placeholder="Qtd"><input type="text" id="osSaida" class="form-control mb-2 shadow-sm" placeholder="OS"><input type="text" id="colabSaida" class="form-control shadow-sm" placeholder="Recebedor"></div><div class="modal-footer"><button onclick="confirmarSaida()" class="btn btn-danger w-100 shadow-sm">Confirmar</button></div></div></div></div>
-<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-warning text-white"><h5>Novo Item</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2 shadow-sm" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2 shadow-sm" placeholder="Saldo"><input type="number" id="minNovo" class="form-control mb-2 shadow-sm" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100 shadow-sm">Cadastrar</button></div></div></div></div>
+<div class="modal fade" id="modalCadastro" tabindex="-1"><div class="modal-dialog modal-sm"><div class="modal-content border-0 shadow"><div class="modal-header bg-warning text-white"><h5>Novo Item</h5></div><div class="modal-body"><input type="text" id="nomeNovo" class="form-control mb-2 shadow-sm" placeholder="Nome"><input type="number" id="qtdNovo" class="form-control mb-2 shadow-sm" placeholder="Saldo Inicial"><input type="number" id="minNovo" class="form-control mb-2 shadow-sm" placeholder="Mínimo"></div><div class="modal-footer"><button onclick="salvarNovoProduto()" class="btn btn-dark w-100 shadow-sm">Cadastrar</button></div></div></div></div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -157,8 +157,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", setorAtivo = "SD";
-    let chartInstance = null, filtroLogAtivo = 'TUDO', filtroAlertaAtivo = false;
+    let dadosAtuais = {}, logsAtuais = {}, usuariosAtuais = {}, userLogado = "", setorAtivo = "SD", chartInstance = null, filtroLogAtivo = 'TUDO', filtroAlertaAtivo = false;
 
     function limparForms() {
         ['qtdEntrada', 'qtdSaida', 'osSaida', 'colabSaida', 'nomeNovo', 'qtdNovo', 'minNovo', 'novaSenhaPessoal', 'novoUserLogin', 'novoUserSenha', 'editUserOldName'].forEach(id => {
@@ -267,7 +266,7 @@
                     <td class="text-center">
                         <button onclick="abrirEntrada('${p.id}')" class="btn btn-sm btn-outline-success" title="Entrada"><i class="bi bi-plus-lg"></i></button>
                         <button onclick="abrirSaida('${p.id}')" class="btn btn-sm btn-outline-danger mx-1" title="Saída"><i class="bi bi-dash-lg"></i></button>
-                        <button onclick="editarProduto('${p.id}', '${p.nome}', ${p.estoqueMinimo})" class="btn btn-sm btn-outline-primary" title="Editar Nome/Mínimo"><i class="bi bi-pencil"></i></button>
+                        <button onclick="editarProduto('${p.id}', '${p.nome}', ${p.estoqueMinimo})" class="btn btn-sm btn-outline-primary" title="Editar"><i class="bi bi-pencil"></i></button>
                     </td>
                     ${btnDel}
                 </tr>`;
@@ -286,7 +285,6 @@
                 ${btnDelLog}
             </div>`;
         });
-        
         document.getElementById('dashTotal').innerText = tot;
         document.getElementById('dashAlerta').innerText = al;
         renderizarGrafico();
@@ -295,7 +293,6 @@
     window.renderizarGrafico = () => {
         const ctx = document.getElementById('meuGrafico').getContext('2d');
         const mesFiltro = document.getElementById('mesFiltroGrafico').value; 
-        
         const counts = {};
         
         Object.values(logsAtuais).forEach(l => { 
@@ -349,6 +346,30 @@
         }
     };
 
+    // --- AUTOMAÇÃO DE HISTÓRICO ATIVADA NO FIREBASE ---
+    window.salvarNovoProduto = () => {
+        const n = document.getElementById('nomeNovo').value; 
+        const q = parseInt(document.getElementById('qtdNovo').value) || 0;
+        const m = parseInt(document.getElementById('minNovo').value) || 0;
+        if(!n) return;
+        
+        const novoItemRef = push(ref(db, `estoque_${setorAtivo}/`));
+        set(novoItemRef, { nome: n, quantidade: q, estoqueMinimo: m }).then(() => {
+            if (q > 0) {
+                push(ref(db, `logs_${setorAtivo}/`), {
+                    tipo: 'ENTRADA',
+                    prod: n,
+                    qtd: q,
+                    user: userLogado,
+                    os: 'Cad. Inicial',
+                    colab: '-',
+                    data: new Date().toLocaleDateString('pt-BR')
+                });
+            }
+            bootstrap.Modal.getInstance('#modalCadastro').hide(); limparForms();
+        });
+    };
+
     window.toggleTheme = () => { document.body.setAttribute('data-bs-theme', document.body.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light'); render(); };
     window.toggleLogs = () => { const s = document.getElementById('secaoLogs'); s.style.display = s.style.display==='none'?'block':'none'; };
     window.filtrarLog = (t) => { filtroLogAtivo = t; document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active')); event.target.classList.add('active'); render(); };
@@ -373,12 +394,6 @@
         bootstrap.Modal.getInstance('#modalSaida').hide(); limparForms();
     };
 
-    window.salvarNovoProduto = () => {
-        const n = document.getElementById('nomeNovo').value; if(!n) return;
-        push(ref(db, `estoque_${setorAtivo}/`), { nome: n, quantidade: parseInt(document.getElementById('qtdNovo').value) || 0, estoqueMinimo: parseInt(document.getElementById('minNovo').value) || 0 });
-        bootstrap.Modal.getInstance('#modalCadastro').hide(); limparForms();
-    };
-
     window.delLog = id => { if(confirm("Excluir log?")) remove(ref(db, `logs_${setorAtivo}/${id}`)); };
     window.del = id => { if(confirm("Excluir item definitivamente?")) remove(ref(db, `estoque_${setorAtivo}/${id}`)); };
     
@@ -393,7 +408,7 @@
     window.mostrarFormUsuario = () => { limparForms(); document.getElementById('formUsuarioAdmin').style.display = 'block'; };
     window.esconderFormUsuario = () => { document.getElementById('formUsuarioAdmin').style.display = 'none'; limparForms(); };
     window.removerUsuario = u => { if(confirm("Remover usuário?")) remove(ref(db, `usuarios/${u}`)); };
-    window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}/senha`), document.getElementById('novaSenhaPessoal').value); alert("Senha atualizada!"); limparForms(); };
+    window.salvarMinhaSenha = () => { set(ref(db, `usuarios/${userLogado}/senha`), document.getElementById('novaSenhaPessoal').value); alert("Senha updated!"); limparForms(); };
     
     document.getElementById('inputBusca').addEventListener('input', render);
     document.getElementById('inputBuscaLog').addEventListener('input', render);
